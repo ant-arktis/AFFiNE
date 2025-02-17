@@ -17,6 +17,7 @@ import {
   inviteUser,
   leaveWorkspace,
   revokeUser,
+  sleep,
   TestingApp,
 } from './utils';
 
@@ -134,6 +135,8 @@ test('should send email', async t => {
     const primitiveMailCount = await getCurrentMailMessageCount();
 
     const invite = await inviteUser(app, workspace.id, u2.email, true);
+    // wait for the email to be sent in the background
+    await sleep(100);
 
     const afterInviteMailCount = await getCurrentMailMessageCount();
     t.is(

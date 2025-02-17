@@ -67,9 +67,10 @@ test.after.always(async t => {
   await t.context.module.close();
 });
 
-test('should create invitation notification', async t => {
-  const { notificationService } = t.context;
+test('should create invitation notification and email', async t => {
+  const { notificationService, mailer } = t.context;
   const inviteId = randomUUID();
+  const sendSpy = Sinon.spy(mailer, 'sendMemberInviteMail');
   const notification = await notificationService.createInvitation({
     userId: member.id,
     body: {
@@ -84,6 +85,35 @@ test('should create invitation notification', async t => {
   t.is(notification!.body.workspaceId, workspace.id);
   t.is(notification!.body.createdByUserId, owner.id);
   t.is(notification!.body.inviteId, inviteId);
+  // wait for email send in background
+  await sleep(50);
+  // should send invitation email
+  t.is(sendSpy.callCount, 1);
+  t.is(sendSpy.args[0][0], member.email);
+  sendSpy.restore();
+});
+
+test('should not send invitation email if user setting is not to receive invitation email', async t => {
+  const { notificationService, mailer } = t.context;
+  const inviteId = randomUUID();
+  const sendSpy = Sinon.spy(mailer, 'sendMemberInviteMail');
+  await t.context.models.settings.set(member.id, {
+    receiveInvitationEmail: false,
+  });
+  const notification = await notificationService.createInvitation({
+    userId: member.id,
+    body: {
+      workspaceId: workspace.id,
+      createdByUserId: owner.id,
+      inviteId,
+    },
+  });
+  t.truthy(notification);
+  // wait for email send in background
+  await sleep(50);
+  // should not send invitation email
+  t.is(sendSpy.callCount, 0);
+  sendSpy.restore();
 });
 
 test('should not create invitation notification if user is already a member', async t => {

@@ -20,7 +20,6 @@ import {
   CanNotRevokeYourself,
   DocNotFound,
   EventBus,
-  InternalServerError,
   MemberNotFoundInSpace,
   MemberQuotaExceeded,
   OwnerCanNotLeaveWorkspace,
@@ -446,10 +445,14 @@ export class WorkspaceResolver {
 
   @Mutation(() => String)
   async invite(
-    @CurrentUser() user: CurrentUser,
+    @CurrentUser() me: CurrentUser,
     @Args('workspaceId') workspaceId: string,
     @Args('email') email: string,
-    @Args('sendInviteMail', { nullable: true }) sendInviteMail: boolean,
+    @Args('sendInviteMail', {
+      nullable: true,
+      deprecationReason: 'never used',
+    })
+    _sendInviteMail: boolean,
     @Args('permission', {
       type: () => WorkspaceRole,
       nullable: true,
@@ -458,7 +461,7 @@ export class WorkspaceResolver {
     _permission?: WorkspaceRole
   ) {
     await this.ac
-      .user(user.id)
+      .user(me.id)
       .workspace(workspaceId)
       .assert('Workspace.Users.Manage');
 
@@ -491,21 +494,7 @@ export class WorkspaceResolver {
         WorkspaceRole.Collaborator
       );
 
-      if (sendInviteMail) {
-        try {
-          await this.workspaceService.sendInviteEmail(role.id);
-        } catch (e) {
-          await this.models.workspaceUser.delete(workspaceId, user.id);
-
-          this.logger.warn(
-            `failed to send ${workspaceId} invite email to ${email}, but successfully revoked permission: ${e}`
-          );
-
-          throw new InternalServerError(
-            'Failed to send invite email. Please try again.'
-          );
-        }
-      }
+      await this.workspaceService.sendInvitationNotification(me.id, role.id);
       return role.id;
     } catch (e) {
       // pass through user friendly error
