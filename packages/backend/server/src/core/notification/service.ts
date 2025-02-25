@@ -149,10 +149,54 @@ export class NotificationService {
   }
 
   async createInvitationAccepted(input: InvitationNotificationCreate) {
+    const isActive = await this.models.workspaceUser.getActive(
+      input.body.workspaceId,
+      input.userId
+    );
+    if (!isActive) {
+      return;
+    }
     await this.ensureWorkspaceContentExists(input.body.workspaceId);
-    return await this.models.notification.createInvitation(
+    const notification = await this.models.notification.createInvitation(
       input,
       NotificationType.InvitationAccepted
+    );
+    this.sendInvitationAcceptedEmail(input).catch(err => {
+      this.logger.error(
+        `Failed to send invitation accepted email to user ${input.userId}`,
+        err
+      );
+    });
+    return notification;
+  }
+
+  private async sendInvitationAcceptedEmail(
+    input: InvitationNotificationCreate
+  ) {
+    const userSetting = await this.models.settings.get(input.userId);
+    if (!userSetting.receiveInvitationEmail) {
+      return;
+    }
+    const receiver = await this.models.user.getWorkspaceUser(input.userId);
+    if (!receiver) {
+      return;
+    }
+    const user = await this.models.user.getWorkspaceUser(
+      input.body.createdByUserId
+    );
+    if (!user) {
+      return;
+    }
+    const workspace = await this.models.workspace.get(input.body.workspaceId);
+    if (!workspace) {
+      return;
+    }
+    await this.mailer.sendMemberAcceptedEmail(receiver.email, {
+      user,
+      workspace: this.formatWorkspaceInfo(workspace),
+    });
+    this.logger.log(
+      `Invitation accepted email sent to user ${receiver.id} for workspace ${workspace.id}`
     );
   }
 

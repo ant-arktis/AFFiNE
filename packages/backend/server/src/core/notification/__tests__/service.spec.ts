@@ -133,9 +133,10 @@ test('should not create invitation notification if user is already a member', as
   t.is(notification, undefined);
 });
 
-test('should create invitation accepted notification', async t => {
-  const { notificationService } = t.context;
+test('should create invitation accepted notification and email', async t => {
+  const { notificationService, mailer } = t.context;
   const inviteId = randomUUID();
+  const sendSpy = Sinon.spy(mailer, 'sendMemberAcceptedEmail');
   const notification = await notificationService.createInvitationAccepted({
     userId: owner.id,
     body: {
@@ -150,6 +151,51 @@ test('should create invitation accepted notification', async t => {
   t.is(notification!.body.workspaceId, workspace.id);
   t.is(notification!.body.createdByUserId, member.id);
   t.is(notification!.body.inviteId, inviteId);
+
+  // wait for email send in background
+  await sleep(50);
+  // should send email
+  t.is(sendSpy.callCount, 1);
+  t.is(sendSpy.firstCall.args[0], owner.email);
+  sendSpy.restore();
+});
+
+test('should not send invitation accepted email if user settings is not receive invitation email', async t => {
+  const { notificationService, mailer } = t.context;
+  const inviteId = randomUUID();
+  const sendSpy = Sinon.spy(mailer, 'sendMemberAcceptedEmail');
+  // should not send email if user settings is not receive invitation email
+  await t.context.models.settings.set(owner.id, {
+    receiveInvitationEmail: false,
+  });
+  const notification = await notificationService.createInvitationAccepted({
+    userId: owner.id,
+    body: {
+      workspaceId: workspace.id,
+      createdByUserId: member.id,
+      inviteId,
+    },
+  });
+  t.truthy(notification);
+  await sleep(50);
+  t.is(sendSpy.callCount, 0);
+
+  sendSpy.restore();
+});
+
+test('should not create invitation accepted notification if user is not an active member', async t => {
+  const { notificationService, models } = t.context;
+  const inviteId = randomUUID();
+  mock.method(models.workspaceUser, 'getActive', async () => null);
+  const notification = await notificationService.createInvitationAccepted({
+    userId: owner.id,
+    body: {
+      workspaceId: workspace.id,
+      createdByUserId: member.id,
+      inviteId,
+    },
+  });
+  t.is(notification, undefined);
 });
 
 test('should create invitation blocked notification', async t => {
