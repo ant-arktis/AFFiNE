@@ -11,6 +11,7 @@ import {
 import {
   defaultWorkspaceName,
   InvitationNotificationCreate,
+  InvitationReviewDeclinedNotificationCreate,
   MentionNotification,
   MentionNotificationCreate,
   Models,
@@ -90,11 +91,7 @@ export class NotificationService {
   }
 
   async createInvitation(input: InvitationNotificationCreate) {
-    const isActive = await this.models.workspaceUser.getActive(
-      input.body.workspaceId,
-      input.userId
-    );
-    if (isActive) {
+    if (await this.isUserActive(input.body.workspaceId, input.userId)) {
       this.logger.debug(
         `User ${input.userId} is already a active member of workspace ${input.body.workspaceId}, skip creating notification`
       );
@@ -149,11 +146,7 @@ export class NotificationService {
   }
 
   async createInvitationAccepted(input: InvitationNotificationCreate) {
-    const isActive = await this.models.workspaceUser.getActive(
-      input.body.workspaceId,
-      input.userId
-    );
-    if (!isActive) {
+    if (!(await this.isUserActive(input.body.workspaceId, input.userId))) {
       return;
     }
     await this.ensureWorkspaceContentExists(input.body.workspaceId);
@@ -214,6 +207,136 @@ export class NotificationService {
       input,
       NotificationType.InvitationRejected
     );
+  }
+
+  async createInvitationReviewRequested(input: InvitationNotificationCreate) {
+    if (await this.isUserActive(input.body.workspaceId, input.userId)) {
+      return;
+    }
+    await this.ensureWorkspaceContentExists(input.body.workspaceId);
+    const notification = await this.models.notification.createInvitation(
+      input,
+      NotificationType.InvitationReviewRequested
+    );
+    this.sendInvitationReviewRequestedEmail(input).catch(err => {
+      this.logger.error(
+        `Failed to send invitation review requested email to user ${input.userId}`,
+        err
+      );
+    });
+    return notification;
+  }
+
+  private async sendInvitationReviewRequestedEmail(
+    input: InvitationNotificationCreate
+  ) {
+    const receiver = await this.models.user.getWorkspaceUser(input.userId);
+    if (!receiver) {
+      return;
+    }
+    const user = await this.models.user.getWorkspaceUser(
+      input.body.createdByUserId
+    );
+    if (!user) {
+      return;
+    }
+    const ws = await this.models.workspace.get(input.body.workspaceId);
+    if (!ws) {
+      return;
+    }
+    const workspace = this.formatWorkspaceInfo(ws);
+    await this.mailer.sendLinkInvitationReviewRequestMail(receiver.email, {
+      workspace,
+      url: workspace.url,
+      user,
+    });
+    this.logger.log(
+      `Invitation review requested email sent to user ${receiver.id} for workspace ${workspace.id}`
+    );
+  }
+
+  async createInvitationReviewApproved(input: InvitationNotificationCreate) {
+    if (!(await this.isUserActive(input.body.workspaceId, input.userId))) {
+      return;
+    }
+    await this.ensureWorkspaceContentExists(input.body.workspaceId);
+    const notification = await this.models.notification.createInvitation(
+      input,
+      NotificationType.InvitationReviewApproved
+    );
+    this.sendInvitationReviewApprovedEmail(input).catch(err => {
+      this.logger.error(
+        `Failed to send invitation review approved email to user ${input.userId}`,
+        err
+      );
+    });
+    return notification;
+  }
+
+  private async sendInvitationReviewApprovedEmail(
+    input: InvitationNotificationCreate
+  ) {
+    const receiver = await this.models.user.getWorkspaceUser(input.userId);
+    if (!receiver) {
+      return;
+    }
+    const ws = await this.models.workspace.get(input.body.workspaceId);
+    if (!ws) {
+      return;
+    }
+    const workspace = this.formatWorkspaceInfo(ws);
+    await this.mailer.sendLinkInvitationApproveMail(receiver.email, {
+      workspace,
+      url: workspace.url,
+    });
+    this.logger.log(
+      `Invitation review approved email sent to user ${receiver.id} for workspace ${workspace.id}`
+    );
+  }
+
+  async createInvitationReviewDeclined(
+    input: InvitationReviewDeclinedNotificationCreate
+  ) {
+    if (await this.isUserActive(input.body.workspaceId, input.userId)) {
+      return;
+    }
+    await this.ensureWorkspaceContentExists(input.body.workspaceId);
+    const notification =
+      await this.models.notification.createInvitationReviewDeclined(input);
+    this.sendInvitationReviewDeclinedEmail(input).catch(err => {
+      this.logger.error(
+        `Failed to send invitation review declined email to user ${input.userId}`,
+        err
+      );
+    });
+    return notification;
+  }
+
+  private async sendInvitationReviewDeclinedEmail(
+    input: InvitationReviewDeclinedNotificationCreate
+  ) {
+    const receiver = await this.models.user.getWorkspaceUser(input.userId);
+    if (!receiver) {
+      return;
+    }
+    const workspace = await this.models.workspace.get(input.body.workspaceId);
+    if (!workspace) {
+      return;
+    }
+    await this.mailer.sendLinkInvitationDeclineMail(receiver.email, {
+      workspace: this.formatWorkspaceInfo(workspace),
+    });
+    this.logger.log(
+      `Invitation review declined email sent to user ${receiver.id} for workspace ${workspace.id}`
+    );
+  }
+
+  private async isUserActive(workspaceId: string, userId: string) {
+    const isActive = await this.models.workspaceUser.getActive(
+      workspaceId,
+      userId
+    );
+    return !!isActive;
   }
 
   private async ensureWorkspaceContentExists(workspaceId: string) {
