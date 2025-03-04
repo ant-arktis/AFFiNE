@@ -1,11 +1,13 @@
+import path from 'node:path';
+
 import { ShareableContent } from '@affine/native';
-import { nativeImage, Notification } from 'electron';
+import { app, nativeImage, Notification } from 'electron';
+import fs from 'fs-extra';
 import { debounce } from 'lodash-es';
 import { BehaviorSubject, distinctUntilChanged, groupBy, mergeMap } from 'rxjs';
 
 import { isMacOS } from '../../shared/utils';
 import { beforeAppQuit } from '../cleanup';
-import { ensureHelperProcess } from '../helper-process';
 import { logger } from '../logger';
 import type { NamespaceHandlers } from '../type';
 import { getMainWindow } from '../windows-manager';
@@ -17,6 +19,11 @@ import type {
 } from './types';
 
 const subscribers: Subscriber[] = [];
+
+const SAVED_RECORDINGS_DIR = path.join(
+  app.getPath('sessionData'),
+  'recordings'
+);
 
 beforeAppQuit(() => {
   subscribers.forEach(subscriber => {
@@ -134,7 +141,9 @@ function setupNewRunningAppGroup() {
           recordingStatus$.value?.appGroup?.processGroupId ===
             currentGroup.processGroupId
         ) {
-          stopRecording();
+          stopRecording().catch(err => {
+            logger.error('failed to stop recording', err);
+          });
         }
       }
     })
@@ -142,7 +151,13 @@ function setupNewRunningAppGroup() {
 }
 
 function createRecording(status: RecordingStatus) {
-  const buffers: Float32Array[] = [];
+  const bufferedFilePath = path.join(
+    SAVED_RECORDINGS_DIR,
+    `${status.appGroup?.bundleIdentifier ?? 'unknown'}-${status.id}-${status.startTime}.raw`
+  );
+
+  fs.ensureDirSync(SAVED_RECORDINGS_DIR);
+  const file = fs.createWriteStream(bufferedFilePath);
 
   function tapAudioSamples(err: Error | null, samples: Float32Array) {
     const recordingStatus = recordingStatus$.getValue();
@@ -157,7 +172,9 @@ function createRecording(status: RecordingStatus) {
     if (err) {
       logger.error('failed to get audio samples', err);
     } else {
-      buffers.push(new Float32Array(samples));
+      // Writing raw Float32Array samples directly to file
+      // For stereo audio, samples are interleaved [L,R,L,R,...]
+      file.write(Buffer.from(samples.buffer));
     }
   }
 
@@ -170,44 +187,29 @@ function createRecording(status: RecordingStatus) {
     startTime: status.startTime,
     app: status.app,
     appGroup: status.appGroup,
-    buffers,
+    file,
     stream,
   };
 
   return recording;
 }
 
-function concatBuffers(buffers: Float32Array[]): Float32Array {
-  const totalSamples = buffers.reduce((acc, buf) => acc + buf.length, 0);
-  const buffer = new Float32Array(totalSamples);
-  let offset = 0;
-  buffers.forEach(buf => {
-    buffer.set(buf, offset);
-    offset += buf.length;
-  });
-  return buffer;
-}
-
-export async function saveRecording(id: number) {
+export async function getRecording(id: number) {
   const recording = recordings.get(id);
   if (!recording) {
     logger.error(`Recording ${id} not found`);
     return;
   }
-  const { buffers } = recording;
-  const helperProcessManager = await ensureHelperProcess();
-  const buffer = concatBuffers(buffers);
-  const mp3Buffer = await helperProcessManager.rpc?.encodeToMp3(buffer, {
-    channels: recording.stream.channels,
+  const rawFilePath = String(recording.file.path);
+  return {
+    id,
+    appGroup: recording.appGroup,
+    app: recording.app,
+    startTime: recording.startTime,
+    filepath: rawFilePath,
     sampleRate: recording.stream.sampleRate,
-  });
-
-  if (!mp3Buffer) {
-    logger.error('failed to encode audio samples to mp3');
-    return;
-  }
-  recordings.delete(recording.id);
-  return mp3Buffer;
+    numberOfChannels: recording.stream.channels,
+  };
 }
 
 function setupRecordingListeners() {
@@ -386,9 +388,15 @@ export function resumeRecording() {
   });
 }
 
-export function stopRecording() {
+export async function stopRecording() {
   const recordingStatus = recordingStatus$.value;
   if (!recordingStatus) {
+    logger.error('No recording status to stop');
+    return;
+  }
+  const recording = recordings.get(recordingStatus?.id);
+  if (!recording) {
+    logger.error(`Recording ${recordingStatus?.id} not found`);
     return;
   }
 
@@ -396,6 +404,15 @@ export function stopRecording() {
   recordingStatus$.next({
     ...recordingStatus,
     status: 'stopped',
+  });
+
+  const { file } = recording;
+  file.end();
+
+  await new Promise<void>(resolve => {
+    file.on('finish', () => {
+      resolve();
+    });
   });
 
   // bring up the window
@@ -411,8 +428,17 @@ export function stopRecording() {
 }
 
 export const recordingHandlers = {
-  saveRecording: async (_, id: number) => {
-    return saveRecording(id);
+  getRecording: async (_, id: number) => {
+    return getRecording(id);
+  },
+  deleteCachedRecording: async (_, id: number) => {
+    const recording = recordings.get(id);
+    if (recording) {
+      recording.stream.stop();
+      recordings.delete(id);
+      await fs.unlink(recording.file.path);
+    }
+    return true;
   },
 } satisfies NamespaceHandlers;
 

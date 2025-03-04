@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { createServer } from 'node:http';
+import path from 'node:path';
 
 import {
   type Application,
@@ -14,6 +15,8 @@ import chokidar from 'chokidar';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs-extra';
+import { debounce } from 'lodash-es';
+import multer from 'multer';
 import { Server } from 'socket.io';
 
 import { gemini, type TranscriptionResult } from './gemini';
@@ -87,6 +90,20 @@ const io = new Server(httpServer, {
   cors: { origin: '*' },
 });
 
+// Add CORS headers middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
 // Update the static file serving to handle the new folder structure
@@ -115,6 +132,14 @@ app.use(
   },
   express.static(RECORDING_DIR)
 );
+
+// Configure multer for temporary file storage
+const upload = multer({
+  dest: RECORDING_DIR,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+});
 
 // Recording management
 async function saveRecording(recording: Recording): Promise<string | null> {
@@ -171,13 +196,23 @@ async function saveRecording(recording: Recording): Promise<string | null> {
     const baseFilename = recording.isGlobal
       ? `global-recording-${timestamp}`
       : `${app?.bundleIdentifier ?? 'unknown'}-${app?.processId ?? 0}-${timestamp}`;
-    const recordingDir = `${RECORDING_DIR}/${baseFilename}`;
+
+    // Sanitize the baseFilename to prevent path traversal
+    const sanitizedFilename = baseFilename
+      .replace(/[/\\:*?"<>|]/g, '') // Remove any filesystem special chars
+      .replace(/^\.+|\.+$/g, ''); // Remove leading/trailing dots
+
+    // Use path.join for safe path construction
+    const recordingDir = path.join(RECORDING_DIR, sanitizedFilename);
     await fs.ensureDir(recordingDir);
 
-    const mp3Filename = `${recordingDir}/recording.mp3`;
-    const transcriptionMp3Filename = `${recordingDir}/transcription.mp3`;
-    const metadataFilename = `${recordingDir}/metadata.json`;
-    const iconFilename = `${recordingDir}/icon.png`;
+    const mp3Filename = path.join(recordingDir, 'recording.mp3');
+    const transcriptionMp3Filename = path.join(
+      recordingDir,
+      'transcription.mp3'
+    );
+    const metadataFilename = path.join(recordingDir, 'metadata.json');
+    const iconFilename = path.join(recordingDir, 'icon.png');
 
     // Save MP3 file with the actual sample rate from the stream
     console.log(`📝 Writing MP3 file to ${mp3Filename}`);
@@ -258,7 +293,9 @@ async function startRecording(app: TappableApplication) {
 
   try {
     const processGroupId = app.processGroupId;
-    const rootApp = shareableContent.applicationWithProcessId(processGroupId);
+    const rootApp =
+      shareableContent.applicationWithProcessId(processGroupId) ||
+      shareableContent.applicationWithProcessId(app.processId);
     if (!rootApp) {
       console.error(`❌ App group not found for ${app.name}`);
       return;
@@ -520,6 +557,8 @@ async function getAllApps(): Promise<AppInfo[]> {
     })
   );
 
+  listenToAppStateChanges(filteredApps);
+
   return filteredApps;
 }
 
@@ -529,25 +568,29 @@ function listenToAppStateChanges(apps: AppInfo[]) {
       if (!app) {
         return { unsubscribe: () => {} };
       }
-      return ShareableContent.onAppStateChanged(app, () => {
-        setTimeout(() => {
-          console.log(
-            `🔄 Application state changed: ${app.name} (PID: ${app.processId}) is now ${
-              app.isRunning ? '▶️ running' : '⏹️ stopped'
-            }`
-          );
-          io.emit('apps:state-changed', {
-            processId: app.processId,
-            isRunning: app.isRunning,
-          });
 
-          if (!app.isRunning) {
-            stopRecording(app.processId).catch(error => {
-              console.error('❌ Error stopping recording:', error);
-            });
-          }
-        }, 100);
-      });
+      const onAppStateChanged = () => {
+        console.log(
+          `🔄 Application state changed: ${app.name} (PID: ${app.processId}) is now ${
+            app.isRunning ? '▶️ running' : '⏹️ stopped'
+          }`
+        );
+        io.emit('apps:state-changed', {
+          processId: app.processId,
+          isRunning: app.isRunning,
+        });
+
+        if (!app.isRunning) {
+          stopRecording(app.processId).catch(error => {
+            console.error('❌ Error stopping recording:', error);
+          });
+        }
+      };
+
+      return ShareableContent.onAppStateChanged(
+        app,
+        debounce(onAppStateChanged, 500)
+      );
     } catch (error) {
       console.error(
         `Failed to listen to app state changes for ${app?.name}:`,
@@ -635,8 +678,16 @@ function validateAndSanitizeFolderName(folderName: string): string | null {
     return null;
   }
 
-  // Remove any path traversal attempts
-  const sanitized = folderName.replace(/^\.+|\.+$/g, '').replace(/[/\\]/g, '');
+  // Remove any path traversal attempts and disallow any special characters
+  const sanitized = folderName
+    .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
+    .replace(/[/\\:*?"<>|]/g, ''); // Remove any filesystem special chars
+
+  // Double-check the sanitized result still matches our expected pattern
+  if (!/^([\w.-]+-\d+-\d+|global-recording-\d+)$/.test(sanitized)) {
+    return null;
+  }
+
   return sanitized;
 }
 
@@ -647,7 +698,8 @@ app.delete('/recordings/:foldername', rateLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Invalid folder name format' });
   }
 
-  const recordingDir = `${RECORDING_DIR}/${foldername}`;
+  // Construct the path safely using path.join to avoid path traversal
+  const recordingDir = path.join(RECORDING_DIR, foldername);
 
   try {
     // Ensure the resolved path is within RECORDING_DIR
@@ -801,6 +853,41 @@ app.post(
       // Notify clients of transcription error
       io.emit('apps:recording-transcription-end', {
         filename: foldername,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+);
+
+app.post(
+  '/transcribe',
+  rateLimiter,
+  upload.single('audio') as any,
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No audio file provided' });
+      }
+
+      // Notify clients that transcription has started
+      io.emit('apps:recording-transcription-start', { filename: 'temp' });
+
+      const transcription = await gemini(req.file.path, {
+        mode: 'transcript',
+      });
+
+      res.json({ success: true, transcription });
+    } catch (error) {
+      console.error('❌ Error during transcription:', error);
+
+      // Notify clients of transcription error
+      io.emit('apps:recording-transcription-end', {
+        filename: 'temp',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

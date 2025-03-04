@@ -198,7 +198,9 @@ class TrayState {
           label: 'Stop',
           click: () => {
             logger.info('User action: Stop Recording');
-            stopRecording();
+            stopRecording().catch(err => {
+              logger.error('Failed to stop recording:', err);
+            });
           },
         },
       ],
@@ -290,7 +292,7 @@ class TrayState {
 
 let _trayState: TrayState | undefined;
 
-export const getTrayState = () => {
+export const setupTrayState = () => {
   if (!_trayState) {
     _trayState = new TrayState();
     _trayState.init();

@@ -10,6 +10,7 @@ import {
 } from '@blocksuite/store';
 
 import type { EmbedCardStyle } from '../../utils/index.js';
+import { TranscriptionBlockFlavour } from '../transcription/transcription-model.js';
 import { AttachmentBlockTransformer } from './attachment-transformer.js';
 
 /**
@@ -84,6 +85,7 @@ export const AttachmentBlockSchema = defineBlockSchema({
       'affine:paragraph',
       'affine:list',
     ],
+    children: [TranscriptionBlockFlavour],
   },
   transformer: transformerConfigs =>
     new AttachmentBlockTransformer(transformerConfigs),

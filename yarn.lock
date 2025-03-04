@@ -392,6 +392,7 @@ __metadata:
     "@emotion/react": "npm:^11.14.0"
     "@floating-ui/dom": "npm:^1.6.13"
     "@juggle/resize-observer": "npm:^3.4.0"
+    "@lit/context": "npm:^1.1.4"
     "@marsidev/react-turnstile": "npm:^1.1.0"
     "@preact/signals-core": "npm:^1.8.0"
     "@radix-ui/react-collapsible": "npm:^1.1.2"
@@ -494,6 +495,7 @@ __metadata:
     "@affine-tools/utils": "workspace:*"
     "@affine/component": "workspace:*"
     "@affine/core": "workspace:*"
+    "@affine/debug": "workspace:*"
     "@affine/electron-api": "workspace:*"
     "@affine/i18n": "workspace:*"
     "@affine/nbstore": "workspace:*"
@@ -513,6 +515,7 @@ __metadata:
     react-router-dom: "npm:^6.28.0"
     typescript: "npm:^5.7.2"
     uuid: "npm:^11.0.3"
+    webm-muxer: "npm:^5.0.3"
   languageName: unknown
   linkType: soft
 
@@ -677,6 +680,7 @@ __metadata:
     "@tailwindcss/vite": "npm:^4.0.6"
     "@types/express": "npm:^4"
     "@types/fs-extra": "npm:^11"
+    "@types/lodash-es": "npm:^4.17.12"
     "@types/multer": "npm:^1"
     "@types/react": "npm:^19.0.1"
     "@types/react-dom": "npm:^19.0.2"
@@ -687,6 +691,7 @@ __metadata:
     express: "npm:^4.21.2"
     express-rate-limit: "npm:^7.1.5"
     fs-extra: "npm:^11.3.0"
+    lodash-es: "npm:^4.17.21"
     multer: "npm:^1.4.5-lts.1"
     openai: "npm:^4.85.1"
     react: "npm:^19.0.0"
@@ -6842,7 +6847,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lit/context@npm:^1.1.2, @lit/context@npm:^1.1.3":
+"@lit/context@npm:^1.1.2, @lit/context@npm:^1.1.3, @lit/context@npm:^1.1.4":
   version: 1.1.4
   resolution: "@lit/context@npm:1.1.4"
   dependencies:
@@ -14194,6 +14199,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/dom-webcodecs@npm:^0.1.4":
+  version: 0.1.14
+  resolution: "@types/dom-webcodecs@npm:0.1.14"
+  checksum: 10/175789a9613202380d28391710b6d5867a76d024135b3ba86297ad49ac5bad8d76f69ca84252db9da260b83ca8f86180fdfd74a8d6eb6a2e47856d3b3edcbac2
+  languageName: node
+  linkType: hard
+
 "@types/eslint-scope@npm:^3.7.7":
   version: 3.7.7
   resolution: "@types/eslint-scope@npm:3.7.7"
@@ -15016,6 +15028,13 @@ __metadata:
   version: 1.18.8
   resolution: "@types/webpack-env@npm:1.18.8"
   checksum: 10/f3932f3d6c2530f644cfc898eda1ab8182d6ae57f555c2f0179d813549b639078671b71e4041831fc306c5ebe61f5cdac794fe4ceae281fce8bf67e23661a488
+  languageName: node
+  linkType: hard
+
+"@types/wicg-file-system-access@npm:^2020.9.5":
+  version: 2020.9.8
+  resolution: "@types/wicg-file-system-access@npm:2020.9.8"
+  checksum: 10/907e88adb8dc88e307e7e99ff7b734f872cbf509a4155f7600fe61a3d6b16b7dc9594e75a174571a58b5559545719c053a98890b4c1b93d5ade916b21b2af290
   languageName: node
   linkType: hard
 
@@ -33616,6 +33635,16 @@ __metadata:
   version: 7.0.0
   resolution: "webidl-conversions@npm:7.0.0"
   checksum: 10/4c4f65472c010eddbe648c11b977d048dd96956a625f7f8b9d64e1b30c3c1f23ea1acfd654648426ce5c743c2108a5a757c0592f02902cf7367adb7d14e67721
+  languageName: node
+  linkType: hard
+
+"webm-muxer@npm:^5.0.3":
+  version: 5.0.3
+  resolution: "webm-muxer@npm:5.0.3"
+  dependencies:
+    "@types/dom-webcodecs": "npm:^0.1.4"
+    "@types/wicg-file-system-access": "npm:^2020.9.5"
+  checksum: 10/60ee47af562eefec9b42d15b66d09f138cac327dfd97d8d1df79f6b945e5ad2b1e98f3384fda14e3dac7824e6cecd6408181d87f2b711d3f3d8b36125738d0d0
   languageName: node
   linkType: hard
 

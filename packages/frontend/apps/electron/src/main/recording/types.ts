@@ -1,3 +1,5 @@
+import type { WriteStream } from 'node:fs';
+
 import type { AudioTapStream, TappableApplication } from '@affine/native';
 
 export interface TappableAppInfo {
@@ -23,8 +25,8 @@ export interface Recording {
   // the app may not be available if the user choose to record system audio
   app?: TappableAppInfo;
   appGroup?: AppGroupInfo;
-  // the raw audio buffers that are already accumulated
-  buffers: Float32Array[];
+  // the buffered file that is being recorded streamed to
+  file: WriteStream;
   stream: AudioTapStream;
   startTime: number;
 }

@@ -31,6 +31,7 @@ import { configureImportTemplateModule } from './import-template';
 import { configureIntegrationModule } from './integration';
 import { configureJournalModule } from './journal';
 import { configureLifecycleModule } from './lifecycle';
+import { configureMediaModule } from './media';
 import { configureNavigationModule } from './navigation';
 import { configureNotificationModule } from './notification';
 import { configureOpenInApp } from './open-in-app';
@@ -103,6 +104,7 @@ export function configureCommonModules(framework: Framework) {
   configureAIButtonModule(framework);
   configureTemplateDocModule(framework);
   configureBlobManagementModule(framework);
+  configureMediaModule(framework);
   configureImportClipperModule(framework);
   configureNotificationModule(framework);
   configureIntegrationModule(framework);

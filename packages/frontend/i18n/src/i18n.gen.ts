@@ -5432,7 +5432,7 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.settings.workspace.experimental-features.enable-callout.name"](): string;
     /**
-      * `Let your words stand out.`
+      * `Let your words stand out. This also include the callout in the transcription block.`
       */
     ["com.affine.settings.workspace.experimental-features.enable-callout.description"](): string;
     /**
@@ -5539,6 +5539,14 @@ export function useAFFiNEI18N(): {
       * `Once enabled, you can preview PDF in embed view.`
       */
     ["com.affine.settings.workspace.experimental-features.enable-pdf-embed-preview.description"](): string;
+    /**
+      * `Audio block`
+      */
+    ["com.affine.settings.workspace.experimental-features.enable-audio-block.name"](): string;
+    /**
+      * `Audio block allows you to play audio files globally and add notes to them.`
+      */
+    ["com.affine.settings.workspace.experimental-features.enable-audio-block.description"](): string;
     /**
       * `Editor RTL`
       */
@@ -7273,6 +7281,14 @@ export function useAFFiNEI18N(): {
       * `Source`
       */
     ["com.affine.integration.readwise-prop.source"](): string;
+    /**
+      * `Notes`
+      */
+    ["com.affine.attachmentViewer.audio.notes"](): string;
+    /**
+      * `Transcribing`
+      */
+    ["com.affine.attachmentViewer.audio.transcribing"](): string;
     /**
       * `An internal error occurred.`
       */
