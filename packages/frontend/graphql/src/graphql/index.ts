@@ -349,6 +349,49 @@ export const getCopilotHistoriesQuery = {
 }`,
 };
 
+export const submitTranscriptionJobMutation = {
+  id: 'submitTranscriptionJobMutation' as const,
+  op: 'submitTranscriptionJob',
+  query: `mutation submitTranscriptionJob($workspaceId: String!, $blobId: String!, $blob: Upload!) {
+  submitTranscriptionJob(blob: $blob, blobId: $blobId, workspaceId: $workspaceId)
+}`,
+  file: true,
+};
+
+export const claimTranscriptionJobMutation = {
+  id: 'claimTranscriptionJobMutation' as const,
+  op: 'claimTranscriptionJob',
+  query: `mutation claimTranscriptionJob($jobId: String!) {
+  claimTranscriptionJob(jobId: $jobId) {
+    transcription {
+      speaker
+      start
+      end
+      transcription
+    }
+    summary
+  }
+}`,
+};
+
+export const getTranscriptionJobsQuery = {
+  id: 'getTranscriptionJobsQuery' as const,
+  op: 'getTranscriptionJobs',
+  query: `query getTranscriptionJobs($workspaceId: String!) {
+  currentUser {
+    copilot(workspaceId: $workspaceId) {
+      transcriptionsJobs {
+        id
+        workspaceId
+        blobId
+        createdBy
+        status
+      }
+    }
+  }
+}`,
+};
+
 export const createCopilotMessageMutation = {
   id: 'createCopilotMessageMutation' as const,
   op: 'createCopilotMessage',
