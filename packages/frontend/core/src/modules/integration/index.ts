@@ -15,6 +15,7 @@ import { ReadwiseStore } from './store/readwise';
 
 export { IntegrationService };
 export { IntegrationTypeIcon } from './views/icon';
+export { DocIntegrationPropertiesTable } from './views/properties-table';
 
 export function configureIntegrationModule(framework: Framework) {
   framework
