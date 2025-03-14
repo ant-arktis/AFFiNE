@@ -139,7 +139,13 @@ abstract class ToolbarContextBase {
 
   getSurfaceModels() {
     if (this.hasSelectedSurfaceModels) {
-      const elements = this.elementsMap$.peek().get(this.flavour$.peek());
+      const flavour = this.flavour$.peek();
+      const elementsMap = this.elementsMap$.peek();
+      const elements = ['affine:surface', 'affine:surface:locked'].includes(
+        flavour
+      )
+        ? Array.from(elementsMap.values()).flat()
+        : elementsMap.get(flavour);
       return elements ?? [];
     }
     return [];
