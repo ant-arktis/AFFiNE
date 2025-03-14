@@ -395,6 +395,8 @@ function createToolbarMoreMenuConfigV2(baseUrl?: string) {
         ],
       },
     ],
+
+    when: ctx => !ctx.getSurfaceModels().some(model => model.isLocked()),
   } as const satisfies ToolbarModuleConfig;
 }
 
