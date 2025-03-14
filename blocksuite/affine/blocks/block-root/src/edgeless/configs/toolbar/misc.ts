@@ -25,8 +25,9 @@ import {
 } from '@blocksuite/icons/lit';
 import { html } from 'lit';
 
-import { EdgelessRootBlockComponent } from '../..';
 import { renderAlignmentMenu } from './alignment';
+import { moreActions } from './more';
+import { getEdgelessWith } from './utils';
 
 export const builtinMiscToolbarConfig = {
   actions: [
@@ -86,15 +87,8 @@ export const builtinMiscToolbarConfig = {
         const models = ctx.getSurfaceModels();
         if (models.length < 2) return;
 
-        const rootModel = ctx.store.root;
-        if (!rootModel) return;
-
-        // TODO(@fundon): it should be simple
-        const edgeless = ctx.view.getBlock(rootModel.id);
-        if (!ctx.matchBlock(edgeless, EdgelessRootBlockComponent)) {
-          console.error('edgeless view is not found.');
-          return;
-        }
+        const edgeless = getEdgelessWith(ctx);
+        if (!edgeless) return;
 
         const frame = edgeless.service.frame.createFrameOnSelected();
         if (!frame) return;
@@ -135,15 +129,8 @@ export const builtinMiscToolbarConfig = {
         const models = ctx.getSurfaceModels();
         if (models.length < 2) return;
 
-        const rootModel = ctx.store.root;
-        if (!rootModel) return;
-
-        // TODO(@fundon): it should be simple
-        const edgeless = ctx.view.getBlock(rootModel.id);
-        if (!ctx.matchBlock(edgeless, EdgelessRootBlockComponent)) {
-          console.error('edgeless view is not found.');
-          return;
-        }
+        const edgeless = getEdgelessWith(ctx);
+        if (!edgeless) return;
 
         // TODO(@fundon): should be a command
         edgeless.service.createGroupFromSelected();
@@ -155,7 +142,6 @@ export const builtinMiscToolbarConfig = {
       when(ctx) {
         const models = ctx.getSurfaceModels();
         if (models.length < 2) return false;
-        if (models.some(model => model.isLocked())) return false;
         if (models.some(model => model.group instanceof MindmapElementModel))
           return false;
         if (
@@ -227,15 +213,8 @@ export const builtinMiscToolbarConfig = {
         const models = ctx.getSurfaceModels();
         if (!models.length) return;
 
-        const rootModel = ctx.store.root;
-        if (!rootModel) return;
-
-        // TODO(@fundon): it should be simple
-        const edgeless = ctx.view.getBlock(rootModel.id);
-        if (!ctx.matchBlock(edgeless, EdgelessRootBlockComponent)) {
-          console.error('edgeless view is not found.');
-          return;
-        }
+        const edgeless = getEdgelessWith(ctx);
+        if (!edgeless) return;
 
         // get most top selected elements(*) from tree, like in a tree below
         //         G0
@@ -318,6 +297,12 @@ export const builtinMiscToolbarConfig = {
         });
       },
     },
+
+    // More actions
+    ...moreActions.map(action => ({
+      ...action,
+      placement: ActionPlacement.More,
+    })),
   ],
   when(ctx) {
     const models = ctx.getSurfaceModels();
@@ -336,15 +321,8 @@ export const builtinLockedToolbarConfig = {
         const models = ctx.getSurfaceModels();
         if (!models.length) return;
 
-        const rootModel = ctx.store.root;
-        if (!rootModel) return;
-
-        // TODO(@fundon): it should be simple
-        const edgeless = ctx.view.getBlock(rootModel.id);
-        if (!ctx.matchBlock(edgeless, EdgelessRootBlockComponent)) {
-          console.error('edgeless view is not found.');
-          return;
-        }
+        const edgeless = getEdgelessWith(ctx);
+        if (!edgeless) return;
 
         const elements = new Set(
           models.map(model =>
