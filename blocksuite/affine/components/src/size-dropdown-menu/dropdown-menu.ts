@@ -35,6 +35,7 @@ export class SizeDropdownMenu extends SignalWatcher(LitElement) {
 
     editor-menu-action {
       justify-content: space-between;
+      color: var(--affine-icon-color);
     }
 
     :host([data-type='check']) editor-menu-action[data-selected] {
