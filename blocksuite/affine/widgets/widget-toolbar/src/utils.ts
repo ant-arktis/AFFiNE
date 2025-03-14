@@ -26,7 +26,7 @@ import {
   offset,
   shift,
 } from '@floating-ui/dom';
-import { html, render, type TemplateResult } from 'lit';
+import { html, render } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { join } from 'lit/directives/join.js';
 import { keyed } from 'lit/directives/keyed.js';
@@ -223,32 +223,31 @@ export function renderToolbar(
       context,
       renderMenuActionItem
     );
-    // if (moreMenuItems.length) {
-    // TODO(@fundon): edgeless case needs to be considered
-    const key = `${context.getCurrentModel()?.id}`;
+    if (moreMenuItems.length) {
+      const key = `${context.getCurrentModel()?.id}`;
 
-    primaryActionGroup.push({
-      id: 'more',
-      content: html`${keyed(
-        `${flavour}:${key}`,
-        html`
-          <editor-menu-button
-            class="more-menu"
-            .contentPadding="${'8px'}"
-            .button=${html`
-              <editor-icon-button aria-label="More" .tooltip="${'More'}">
-                ${MoreVerticalIcon()}
-              </editor-icon-button>
-            `}
-          >
-            <div data-size="large" data-orientation="vertical">
-              ${join(moreMenuItems, renderToolbarSeparator('horizontal'))}
-            </div>
-          </editor-menu-button>
-        `
-      )}`,
-    });
-    // }
+      primaryActionGroup.push({
+        id: 'more',
+        content: html`${keyed(
+          `${flavour}:${key}`,
+          html`
+            <editor-menu-button
+              class="more-menu"
+              .contentPadding="${'8px'}"
+              .button=${html`
+                <editor-icon-button aria-label="More" .tooltip="${'More'}">
+                  ${MoreVerticalIcon()}
+                </editor-icon-button>
+              `}
+            >
+              <div data-size="large" data-orientation="vertical">
+                ${join(moreMenuItems, renderToolbarSeparator('horizontal'))}
+              </div>
+            </editor-menu-button>
+          `
+        )}`,
+      });
+    }
   }
 
   render(
@@ -264,20 +263,18 @@ function renderActions(
 ) {
   return actions
     .map(action => {
-      let content: TemplateResult | null = null;
       if ('content' in action) {
         if (typeof action.content === 'function') {
-          content = action.content(context);
+          return action.content(context);
         } else {
-          content = action.content ?? null;
+          return action.content ?? null;
         }
-        return content;
       }
 
       if ('actions' in action && action.actions.length) {
         const combined = combine(action.actions, context);
 
-        if (!combined.length) return content;
+        if (!combined.length) return null;
 
         const ordered = orderBy(combined, ['id', 'score'], ['asc', 'asc']);
 
@@ -301,7 +298,7 @@ function renderActions(
         return render(action, context);
       }
 
-      return content;
+      return null;
     })
     .filter(action => action !== null);
 }
