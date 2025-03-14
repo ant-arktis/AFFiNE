@@ -9,7 +9,7 @@ import { builtinEdgelessTextToolbarConfig } from './edgeless-text';
 import { createFrameToolbarConfig } from './frame';
 import { builtinGroupToolbarConfig } from './group';
 import { builtinMindmapToolbarConfig } from './mindmap';
-import { builtinMiscToolbarConfig } from './misc';
+import { builtinLockedToolbarConfig, builtinMiscToolbarConfig } from './misc';
 import { builtinShapeToolbarConfig } from './shape';
 import { builtinTextToolbarConfig } from './text';
 
@@ -54,5 +54,12 @@ export const EdgelessElementToolbarExtension: ExtensionType[] = [
   ToolbarModuleExtension({
     id: BlockFlavourIdentifier('affine:surface:*'),
     config: builtinMiscToolbarConfig,
+  }),
+
+  // Special Scenarios
+  // Only display the `unlock` button when the selection includes a locked element.
+  ToolbarModuleExtension({
+    id: BlockFlavourIdentifier('affine:surface:locked'),
+    config: builtinLockedToolbarConfig,
   }),
 ];
