@@ -51,12 +51,11 @@ import {
 import { html } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
 
-import { EdgelessRootBlockComponent } from '../..';
 import { mountConnectorLabelEditor } from '../../utils/text';
 import { LINE_STYLE_LIST } from './consts';
 import { createTextActions } from './text-common';
 import type { MenuItem } from './types';
-import { renderMenu } from './utils';
+import { getEdgelessWith, renderMenu } from './utils';
 
 const FRONT_ENDPOINT_STYLE_LIST = [
   {
@@ -336,12 +335,8 @@ export const builtinConnectorToolbarConfig = {
         const rootModel = ctx.store.root;
         if (!rootModel) return;
 
-        // TODO(@fundon): it should be simple
-        const edgeless = ctx.view.getBlock(rootModel.id);
-        if (!ctx.matchBlock(edgeless, EdgelessRootBlockComponent)) {
-          console.error('edgeless view is not found.');
-          return;
-        }
+        const edgeless = getEdgelessWith(ctx);
+        if (!edgeless) return;
 
         mountConnectorLabelEditor(model, edgeless);
       },
