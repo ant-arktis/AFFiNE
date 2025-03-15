@@ -56,9 +56,11 @@ import {
   FeatureFlagService,
   GenerateDocUrlProvider,
   isRemovedUserInfo,
+  OpenDocExtensionIdentifier,
   type OpenDocMode,
   type ToolbarAction,
-  type ToolbarActionGroup,
+  type ToolbarActionGenerator,
+  type ToolbarActionGroupGenerator,
   type ToolbarContext,
   type ToolbarModuleConfig,
   ToolbarModuleExtension,
@@ -479,70 +481,138 @@ function createExternalLinkableToolbarConfig(
 
 const openDocActions = [
   {
-    id: 'open-in-active-view',
+    mode: 'open-in-active-view',
+    id: 'a.open-in-active-view',
     label: I18n['com.affine.peek-view-controls.open-doc'](),
     icon: ExpandFullIcon(),
+    when: true,
   },
   {
-    id: 'open-in-new-view',
+    mode: 'open-in-new-view',
+    id: 'b.open-in-new-view',
     label: I18n['com.affine.peek-view-controls.open-doc-in-split-view'](),
     icon: SplitViewIcon(),
-    when: () => BUILD_CONFIG.isElectron,
+    when: BUILD_CONFIG.isElectron,
   },
   {
-    id: 'open-in-new-tab',
+    mode: 'open-in-new-tab',
+    id: 'c.open-in-new-tab',
     label: I18n['com.affine.peek-view-controls.open-doc-in-new-tab'](),
     icon: OpenInNewIcon(),
+    when: true,
   },
   {
-    id: 'open-in-center-peek',
+    mode: 'open-in-center-peek',
+    id: 'd.open-in-center-peek',
     label: I18n['com.affine.peek-view-controls.open-doc-in-center-peek'](),
     icon: CenterPeekIcon(),
+    when: true,
   },
-] as const satisfies ToolbarAction[];
+] as const satisfies (Pick<ToolbarAction, 'id' | 'label' | 'icon' | 'when'> & {
+  mode: OpenDocMode;
+})[];
+
+function createOpenDocActions(
+  ctx: ToolbarContext,
+  target:
+    | EmbedLinkedDocBlockComponent
+    | EmbedSyncedDocBlockComponent
+    | AffineReference,
+  isSameDoc: boolean,
+  actions = openDocActions
+) {
+  return actions
+    .filter(action => action.when)
+    .map<ToolbarActionGenerator>(action => {
+      const openMode = action.mode;
+      const shouldOpenInCenterPeek = openMode === 'open-in-center-peek';
+      const shouldOpenInActiveView = openMode === 'open-in-active-view';
+
+      return {
+        ...action,
+        generate(ctx) {
+          const disabled = shouldOpenInActiveView ? isSameDoc : false;
+
+          const when =
+            ctx.std.get(OpenDocExtensionIdentifier).isAllowed(openMode) &&
+            (shouldOpenInCenterPeek ? isPeekable(target) : true);
+
+          const run = shouldOpenInCenterPeek
+            ? (_ctx: ToolbarContext) => peek(target)
+            : (_ctx: ToolbarContext) => target.open({ openMode });
+
+          return { disabled, when, run };
+        },
+      };
+    })
+    .filter(action => {
+      if (typeof action.when === 'function') return action.when(ctx);
+      return action.when ?? true;
+    });
+}
 
 function createOpenDocActionGroup(
   klass:
     | typeof EmbedLinkedDocBlockComponent
     | typeof EmbedSyncedDocBlockComponent
-) {
+): ToolbarAction {
   return {
     placement: ActionPlacement.Start,
     id: 'A.open-doc',
-    actions: openDocActions,
     content(ctx) {
       const block = ctx.getCurrentBlockByType(klass);
       if (!block) return null;
 
-      const actions = this.actions
-        .map<ToolbarAction>(action => {
-          const shouldOpenInCenterPeek = action.id === 'open-in-center-peek';
-          const shouldOpenInActiveView = action.id === 'open-in-active-view';
-          const allowed =
-            typeof action.when === 'function'
-              ? action.when(ctx)
-              : (action.when ?? true);
-          return {
-            ...action,
-            disabled: shouldOpenInActiveView
-              ? block.model.props.pageId === ctx.store.id
-              : false,
-            when:
-              allowed && (shouldOpenInCenterPeek ? isPeekable(block) : true),
-            run: shouldOpenInCenterPeek
-              ? (_ctx: ToolbarContext) => peek(block)
-              : (_ctx: ToolbarContext) =>
-                  block.open({
-                    openMode: action.id as OpenDocMode,
-                  }),
-          };
-        })
-        .filter(action => {
-          if (typeof action.when === 'function') return action.when(ctx);
-          return action.when ?? true;
-        });
+      return renderOpenDocMenu(
+        ctx,
+        block,
+        block.model.props.pageId === ctx.store.id
+      );
+    },
+  };
+}
 
-      return html`
+function createEdgelessOpenDocActionGroup(
+  klass:
+    | typeof EmbedLinkedDocBlockComponent
+    | typeof EmbedSyncedDocBlockComponent
+): ToolbarActionGroupGenerator {
+  return {
+    placement: ActionPlacement.More,
+    id: 'Z.c.open-doc',
+    generate(ctx) {
+      const block = ctx.getCurrentBlockByType(klass);
+      if (!block) return null;
+
+      const actions = createOpenDocActions(
+        ctx,
+        block,
+        block.model.props.pageId === ctx.store.id
+      ).map(action => ({ ...action, ...action.generate(ctx) }));
+
+      return { actions };
+    },
+  };
+}
+
+function renderOpenDocMenu(
+  ctx: ToolbarContext,
+  target:
+    | EmbedLinkedDocBlockComponent
+    | EmbedSyncedDocBlockComponent
+    | AffineReference,
+  isSameDoc: boolean
+) {
+  const actions = createOpenDocActions(ctx, target, isSameDoc).map(action => ({
+    ...action,
+    ...action.generate(ctx),
+  }));
+  if (!actions.length) return null;
+
+  return html`
+    ${keyed(
+      target,
+      html`
         <editor-menu-button
           .contentPadding="${'8px'}"
           .button=${html`
@@ -558,9 +628,7 @@ function createOpenDocActionGroup(
               ({ label, icon, run, disabled }) => html`
                 <editor-menu-action
                   aria-label=${ifDefined(label)}
-                  ?disabled=${ifDefined(
-                    typeof disabled === 'function' ? disabled(ctx) : disabled
-                  )}
+                  ?disabled=${ifDefined(disabled)}
                   @click=${() => run?.(ctx)}
                 >
                   ${icon}<span class="label">${label}</span>
@@ -569,9 +637,9 @@ function createOpenDocActionGroup(
             )}
           </div>
         </editor-menu-button>
-      `;
-    },
-  } satisfies ToolbarActionGroup<ToolbarAction>;
+      `
+    )}
+  `;
 }
 
 const embedLinkedDocToolbarConfig = {
@@ -737,77 +805,17 @@ const inlineReferenceToolbarConfig = {
     {
       placement: ActionPlacement.Start,
       id: 'A.open-doc',
-      actions: openDocActions,
       content(ctx) {
         const target = ctx.message$.peek()?.element;
         if (!(target instanceof AffineReference)) return null;
 
-        const actions = this.actions
-          .map<ToolbarAction>(action => {
-            const shouldOpenInCenterPeek = action.id === 'open-in-center-peek';
-            const shouldOpenInActiveView = action.id === 'open-in-active-view';
-            const allowed =
-              typeof action.when === 'function'
-                ? action.when(ctx)
-                : (action.when ?? true);
-            return {
-              ...action,
-              disabled: shouldOpenInActiveView
-                ? target.referenceInfo.pageId === ctx.store.id
-                : false,
-              when:
-                allowed && (shouldOpenInCenterPeek ? isPeekable(target) : true),
-              run: shouldOpenInCenterPeek
-                ? (_ctx: ToolbarContext) => peek(target)
-                : (_ctx: ToolbarContext) =>
-                    target.open({
-                      openMode: action.id as OpenDocMode,
-                    }),
-            };
-          })
-          .filter(action => {
-            if (typeof action.when === 'function') return action.when(ctx);
-            return action.when ?? true;
-          });
-
-        return html`${keyed(
+        return renderOpenDocMenu(
+          ctx,
           target,
-          html`
-            <editor-menu-button
-              .contentPadding="${'8px'}"
-              .button=${html`
-                <editor-icon-button
-                  aria-label="Open doc"
-                  .tooltip=${'Open doc'}
-                >
-                  ${OpenInNewIcon()} ${ArrowDownSmallIcon()}
-                </editor-icon-button>
-              `}
-            >
-              <div data-size="small" data-orientation="vertical">
-                ${repeat(
-                  actions,
-                  action => action.id,
-                  ({ label, icon, run, disabled }) => html`
-                    <editor-menu-action
-                      aria-label=${ifDefined(label)}
-                      ?disabled=${ifDefined(
-                        typeof disabled === 'function'
-                          ? disabled(ctx)
-                          : disabled
-                      )}
-                      @click=${() => run?.(ctx)}
-                    >
-                      ${icon}<span class="label">${label}</span>
-                    </editor-menu-action>
-                  `
-                )}
-              </div>
-            </editor-menu-button>
-          `
-        )}`;
+          target.referenceInfo.pageId === ctx.store.id
+        );
       },
-    } satisfies ToolbarActionGroup<ToolbarAction>,
+    },
     {
       id: 'b.copy-link-and-edit',
       actions: [
@@ -1016,7 +1024,14 @@ export const createCustomToolbarExtension = (
 
     ToolbarModuleExtension({
       id: BlockFlavourIdentifier('custom:affine:surface:embed-linked-doc'),
-      config: embedLinkedDocToolbarConfig,
+      config: {
+        actions: [
+          embedLinkedDocToolbarConfig.actions,
+          createEdgelessOpenDocActionGroup(EmbedLinkedDocBlockComponent),
+        ].flat(),
+
+        when: ctx => ctx.getSurfaceModels().length === 1,
+      },
     }),
 
     ToolbarModuleExtension({
@@ -1026,7 +1041,14 @@ export const createCustomToolbarExtension = (
 
     ToolbarModuleExtension({
       id: BlockFlavourIdentifier('custom:affine:surface:embed-synced-doc'),
-      config: embedSyncedDocToolbarConfig,
+      config: {
+        actions: [
+          embedSyncedDocToolbarConfig.actions,
+          createEdgelessOpenDocActionGroup(EmbedSyncedDocBlockComponent),
+        ].flat(),
+
+        when: ctx => ctx.getSurfaceModels().length === 1,
+      },
     }),
 
     ToolbarModuleExtension({
