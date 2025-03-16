@@ -1,6 +1,6 @@
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import { NoteDisplayMode } from '@blocksuite/affine-model';
 import { ShadowlessElement } from '@blocksuite/block-std';
-import { ArrowDownSmallIcon } from '@blocksuite/icons/lit';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 
@@ -34,7 +34,7 @@ export class EdgelessNoteDisplayModeDropdownMenu extends ShadowlessElement {
             .labelHeight="${'20px'}"
           >
             <span class="label">${mode}</span>
-            ${ArrowDownSmallIcon()}
+            ${EditorChevronDown}
           </editor-icon-button>
         `}
       >

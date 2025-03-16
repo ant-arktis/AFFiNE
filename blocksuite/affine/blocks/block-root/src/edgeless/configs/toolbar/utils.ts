@@ -1,5 +1,5 @@
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import type { ToolbarContext } from '@blocksuite/affine-shared/services';
-import { ArrowDownSmallIcon } from '@blocksuite/icons/lit';
 import { html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -31,7 +31,7 @@ export function renderMenu<T>({
           .tooltip="${tooltip ?? label}"
         >
           ${icon ?? renderCurrentMenuItemWith(items, currentValue, 'icon')}
-          ${ArrowDownSmallIcon()}
+          ${EditorChevronDown}
         </editor-icon-button>
       `}
     >

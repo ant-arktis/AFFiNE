@@ -1,8 +1,6 @@
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import { ColorScheme, NoteShadow } from '@blocksuite/affine-model';
-import {
-  ArrowDownSmallIcon,
-  NoteShadowDuotoneIcon,
-} from '@blocksuite/icons/lit';
+import { NoteShadowDuotoneIcon } from '@blocksuite/icons/lit';
 import { css, html, LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -119,7 +117,7 @@ export class EdgelessNoteShadowDropdownMenu extends LitElement {
             aria-label="Shadow style"
             .tooltip="${'Shadow style'}"
           >
-            ${NoteShadowDuotoneIcon()} ${ArrowDownSmallIcon()}
+            ${NoteShadowDuotoneIcon()} ${EditorChevronDown}
           </editor-icon-button>
         `}
       >

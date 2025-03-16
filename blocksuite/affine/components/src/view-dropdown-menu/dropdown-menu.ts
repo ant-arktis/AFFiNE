@@ -4,13 +4,14 @@ import {
 } from '@blocksuite/affine-shared/services';
 import { PropTypes, requiredProperties } from '@blocksuite/block-std';
 import { SignalWatcher } from '@blocksuite/global/lit';
-import { ArrowDownSmallIcon } from '@blocksuite/icons/lit';
 import type { ReadonlySignal, Signal } from '@preact/signals-core';
 import { LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
 import { html } from 'lit-html';
 import { ifDefined } from 'lit-html/directives/if-defined.js';
 import { repeat } from 'lit-html/directives/repeat.js';
+
+import { EditorChevronDown } from '../toolbar';
 
 @requiredProperties({
   actions: PropTypes.array,
@@ -46,7 +47,7 @@ export class ViewDropdownMenu extends SignalWatcher(LitElement) {
             .iconContainerWidth="${'110px'}"
           >
             <span class="label">${viewType}</span>
-            ${ArrowDownSmallIcon()}
+            ${EditorChevronDown}
           </editor-icon-button>
         `}
       >

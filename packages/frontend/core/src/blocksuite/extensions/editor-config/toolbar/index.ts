@@ -35,9 +35,10 @@ import {
 } from '@blocksuite/affine/components/notification';
 import { isPeekable, peek } from '@blocksuite/affine/components/peek';
 import { toast } from '@blocksuite/affine/components/toast';
-import type {
-  MenuContext,
-  MenuItemGroup,
+import {
+  EditorChevronDown,
+  type MenuContext,
+  type MenuItemGroup,
 } from '@blocksuite/affine/components/toolbar';
 import { watch } from '@blocksuite/affine/global/lit';
 import {
@@ -69,7 +70,6 @@ import {
 import { matchModels } from '@blocksuite/affine/shared/utils';
 import type { ExtensionType } from '@blocksuite/affine/store';
 import {
-  ArrowDownSmallIcon,
   CenterPeekIcon,
   CopyAsImgaeIcon,
   CopyIcon,
@@ -617,7 +617,7 @@ function renderOpenDocMenu(
           .contentPadding="${'8px'}"
           .button=${html`
             <editor-icon-button aria-label="Open doc" .tooltip=${'Open doc'}>
-              ${OpenInNewIcon()} ${ArrowDownSmallIcon()}
+              ${OpenInNewIcon()} ${EditorChevronDown}
             </editor-icon-button>
           `}
         >
