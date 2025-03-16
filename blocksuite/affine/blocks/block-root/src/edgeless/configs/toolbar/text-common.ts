@@ -6,6 +6,7 @@ import {
   packColor,
   type PickColorEvent,
 } from '@blocksuite/affine-components/color-picker';
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import {
   DefaultTheme,
   FontFamily,
@@ -26,7 +27,6 @@ import {
 } from '@blocksuite/affine-shared/utils';
 import type { GfxModel } from '@blocksuite/block-std/gfx';
 import {
-  ArrowDownSmallIcon,
   TextAlignCenterIcon,
   TextAlignLeftIcon,
   TextAlignRightIcon,
@@ -157,7 +157,8 @@ export function createTextActions<
               >
                 <span class="label padding0" style=${styleMap(styleInfo)}
                   >Aa</span
-                >${ArrowDownSmallIcon()}
+                >
+                ${EditorChevronDown}
               </editor-icon-button>
             `}
           >
@@ -285,7 +286,7 @@ export function createTextActions<
                     'key'
                   )}
                 </span>
-                ${ArrowDownSmallIcon()}
+                ${EditorChevronDown}
               </editor-icon-button>
             `}
           >

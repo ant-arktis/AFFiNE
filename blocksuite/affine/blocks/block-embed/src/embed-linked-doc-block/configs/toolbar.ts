@@ -1,4 +1,5 @@
 import { toast } from '@blocksuite/affine-components/toast';
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import {
   type EmbedCardStyle,
   EmbedLinkedDocModel,
@@ -25,7 +26,6 @@ import {
 import { BlockFlavourIdentifier } from '@blocksuite/block-std';
 import { Bound } from '@blocksuite/global/gfx';
 import {
-  ArrowDownSmallIcon,
   CaptionIcon,
   CopyIcon,
   DeleteIcon,
@@ -136,7 +136,7 @@ const openDocActionGroup = {
         .contentPadding="${'8px'}"
         .button=${html`
           <editor-icon-button aria-label="Open doc" .tooltip=${'Open doc'}>
-            ${OpenInNewIcon()} ${ArrowDownSmallIcon()}
+            ${OpenInNewIcon()} ${EditorChevronDown}
           </editor-icon-button>
         `}
       >

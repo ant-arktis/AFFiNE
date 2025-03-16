@@ -4,6 +4,7 @@ import {
   EdgelessCRUDIdentifier,
   updateXYWH,
 } from '@blocksuite/affine-block-surface';
+import { EditorChevronDown } from '@blocksuite/affine-components/toolbar';
 import type { ToolbarContext } from '@blocksuite/affine-shared/services';
 import type { GfxModel } from '@blocksuite/block-std/gfx';
 import { Bound } from '@blocksuite/global/gfx';
@@ -14,7 +15,6 @@ import {
   AlignRightIcon,
   AlignTopIcon,
   AlignVerticalCenterIcon,
-  ArrowDownSmallIcon,
   AutoTidyUpIcon,
   DistributeHorizontalIcon,
   DistributeVerticalIcon,
@@ -272,7 +272,7 @@ export function renderAlignmentMenu(
           aria-label="${label}"
           .tooltip="${tooltip ?? label}"
         >
-          ${icon} ${ArrowDownSmallIcon()}
+          ${icon} ${EditorChevronDown}
         </editor-icon-button>
       `}
     >

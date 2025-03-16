@@ -1,7 +1,7 @@
 import { stopPropagation } from '@blocksuite/affine-shared/utils';
 import { PropTypes, requiredProperties } from '@blocksuite/block-std';
 import { SignalWatcher } from '@blocksuite/global/lit';
-import { ArrowDownSmallIcon, DoneIcon } from '@blocksuite/icons/lit';
+import { DoneIcon } from '@blocksuite/icons/lit';
 import type { ReadonlySignal, Signal } from '@preact/signals-core';
 import { css, html, LitElement, type TemplateResult } from 'lit';
 import { property, query } from 'lit/decorators.js';
@@ -9,7 +9,7 @@ import { repeat } from 'lit-html/directives/repeat.js';
 import { when } from 'lit-html/directives/when.js';
 import clamp from 'lodash-es/clamp';
 
-import type { EditorMenuButton } from '../toolbar';
+import { EditorChevronDown, type EditorMenuButton } from '../toolbar';
 
 type SizeItem = { key?: string | number; value: number };
 
@@ -145,7 +145,7 @@ export class SizeDropdownMenu extends SignalWatcher(LitElement) {
           >
             ${icon ??
             html`<span class="label">${format?.(size) ?? size}</span>`}
-            ${ArrowDownSmallIcon()}
+            ${EditorChevronDown}
           </editor-icon-button>
         `}
       >
