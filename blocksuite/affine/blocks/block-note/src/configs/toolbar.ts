@@ -15,7 +15,6 @@ import {
   resolveColor,
 } from '@blocksuite/affine-model';
 import {
-  FeatureFlagService,
   NotificationProvider,
   SidebarExtensionIdentifier,
   type ToolbarAction,
@@ -64,9 +63,7 @@ const builtinSurfaceToolbarConfig = {
       when(ctx) {
         return (
           ctx.getSurfaceModelsByType(NoteBlockModel).length === 1 &&
-          ctx.std
-            .get(FeatureFlagService)
-            .getFlag('enable_advanced_block_visibility')
+          ctx.features.getFlag('enable_advanced_block_visibility')
         );
       },
       content(ctx) {
@@ -98,9 +95,7 @@ const builtinSurfaceToolbarConfig = {
         return (
           elements.length === 1 &&
           !elements[0].isPageBlock() &&
-          !ctx.std
-            .get(FeatureFlagService)
-            .getFlag('enable_advanced_block_visibility')
+          !ctx.features.getFlag('enable_advanced_block_visibility')
         );
       },
       generate(ctx) {
@@ -153,10 +148,8 @@ const builtinSurfaceToolbarConfig = {
         const models = ctx.getSurfaceModelsByType(NoteBlockModel);
         if (!models.length) return null;
 
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
-        const theme = ctx.themeProvider.edgelessTheme;
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const firstModel = models[0];
         const background =
@@ -216,7 +209,7 @@ const builtinSurfaceToolbarConfig = {
             const models = ctx.getSurfaceModelsByType(NoteBlockModel);
             if (!models.length) return null;
 
-            const theme = ctx.themeProvider.edgelessTheme;
+            const theme = ctx.theme.edgeless$.value;
 
             const firstModel = models[0];
             const { shadowType } = firstModel.props.edgeless.style;
@@ -367,9 +360,7 @@ const builtinSurfaceToolbarConfig = {
       when(ctx) {
         return (
           ctx.getSurfaceModelsByType(NoteBlockModel).length === 1 &&
-          ctx.std
-            .get(FeatureFlagService)
-            .getFlag('enable_advanced_block_visibility')
+          ctx.features.getFlag('enable_advanced_block_visibility')
         );
       },
       run(ctx) {

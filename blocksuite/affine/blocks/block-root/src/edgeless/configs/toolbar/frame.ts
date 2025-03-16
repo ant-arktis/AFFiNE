@@ -16,7 +16,6 @@ import {
   SurfaceRefBlockSchema,
 } from '@blocksuite/affine-model';
 import {
-  FeatureFlagService,
   type ToolbarModuleConfig,
   ToolbarModuleExtension,
 } from '@blocksuite/affine-shared/services';
@@ -125,10 +124,8 @@ const builtinSurfaceToolbarConfig = {
         const models = ctx.getSurfaceModelsByType(FrameBlockModel);
         if (!models.length) return null;
 
-        const theme = ctx.themeProvider.edgelessTheme;
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const field = 'background';
         const firstModel = models[0];

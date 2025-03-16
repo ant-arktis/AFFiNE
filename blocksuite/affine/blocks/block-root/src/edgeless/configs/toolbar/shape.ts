@@ -24,10 +24,9 @@ import {
   ShapeType,
   StrokeStyle,
 } from '@blocksuite/affine-model';
-import {
-  FeatureFlagService,
-  type ToolbarGenericAction,
-  type ToolbarModuleConfig,
+import type {
+  ToolbarGenericAction,
+  ToolbarModuleConfig,
 } from '@blocksuite/affine-shared/services';
 import { getMostCommonValue } from '@blocksuite/affine-shared/utils';
 import { Bound } from '@blocksuite/global/gfx';
@@ -184,10 +183,8 @@ export const builtinShapeToolbarConfig = {
         const models = ctx.getSurfaceModelsByType(ShapeElementModel);
         if (!models.length) return null;
 
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
-        const theme = ctx.themeProvider.edgelessTheme;
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const firstModel = models[0];
         const originalFillColor = firstModel.fillColor;

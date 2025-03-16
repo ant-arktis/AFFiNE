@@ -16,10 +16,9 @@ import {
   TextAlign,
   type TextStyleProps,
 } from '@blocksuite/affine-model';
-import {
-  FeatureFlagService,
-  type ToolbarActions,
-  type ToolbarContext,
+import type {
+  ToolbarActions,
+  ToolbarContext,
 } from '@blocksuite/affine-shared/services';
 import {
   getMostCommonResolvedValue,
@@ -180,10 +179,8 @@ export function createTextActions<
         );
         if (!allowed) return null;
 
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
-        const theme = ctx.themeProvider.edgelessTheme;
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const palettes =
           type === 'shape'

@@ -21,11 +21,10 @@ import {
   resolveColor,
   StrokeStyle,
 } from '@blocksuite/affine-model';
-import {
-  FeatureFlagService,
-  type ToolbarContext,
-  type ToolbarGenericAction,
-  type ToolbarModuleConfig,
+import type {
+  ToolbarContext,
+  ToolbarGenericAction,
+  ToolbarModuleConfig,
 } from '@blocksuite/affine-shared/services';
 import {
   getMostCommonResolvedValue,
@@ -129,10 +128,8 @@ export const builtinConnectorToolbarConfig = {
         const models = ctx.getSurfaceModelsByType(ConnectorElementModel);
         if (!models.length) return null;
 
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
-        const theme = ctx.themeProvider.edgelessTheme;
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const field = 'stroke';
         const firstModel = models[0];
