@@ -62,9 +62,7 @@ export class CardStyleDropdownMenu extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor style$!: Signal<string> | ReadonlySignal<string>;
 
-  icons$ = computed(
-    () => cardStyleMap[this.context.themeProvider.theme$.value]
-  );
+  icons$ = computed(() => cardStyleMap[this.context.theme.theme$.value]);
 
   override render() {
     const {

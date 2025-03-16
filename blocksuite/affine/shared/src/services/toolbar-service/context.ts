@@ -18,6 +18,7 @@ import type {
 
 import { DocModeProvider } from '../doc-mode-service';
 import { EditPropsStore } from '../edit-props-store';
+import { FeatureFlagService } from '../feature-flag-service';
 import { TelemetryProvider, type TelemetryService } from '../telemetry-service';
 import { ThemeProvider } from '../theme-service';
 import { ToolbarRegistryIdentifier } from './registry';
@@ -98,16 +99,16 @@ abstract class ToolbarContextBase {
     return this.std.get(GfxControllerIdentifier);
   }
 
-  get themeProvider() {
-    return this.std.get(ThemeProvider);
-  }
-
   get theme() {
-    return this.themeProvider.theme;
+    return this.std.get(ThemeProvider);
   }
 
   get settings() {
     return this.std.get(EditPropsStore);
+  }
+
+  get features() {
+    return this.std.get(FeatureFlagService);
   }
 
   get toolbarRegistry() {

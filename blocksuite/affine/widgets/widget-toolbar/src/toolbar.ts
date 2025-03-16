@@ -1,7 +1,11 @@
 import { DatabaseSelection } from '@blocksuite/affine-block-database';
 import { EdgelessLegacySlotIdentifier } from '@blocksuite/affine-block-surface';
 import { TableSelection } from '@blocksuite/affine-block-table';
-import { EditorToolbar } from '@blocksuite/affine-components/toolbar';
+import {
+  darkToolbarStyles,
+  EditorToolbar,
+  lightToolbarStyles,
+} from '@blocksuite/affine-components/toolbar';
 import {
   CodeBlockModel,
   ImageBlockModel,
@@ -34,7 +38,7 @@ import {
 import { nextTick } from '@blocksuite/global/utils';
 import type { Placement, ReferenceElement, SideObject } from '@floating-ui/dom';
 import { batch, effect, signal } from '@preact/signals-core';
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
 import groupBy from 'lodash-es/groupBy';
 import throttle from 'lodash-es/throttle';
 import toPairs from 'lodash-es/toPairs';
@@ -70,6 +74,13 @@ export class AffineToolbarWidget extends WidgetComponent {
       @starting-style {
         opacity: 0;
       }
+    }
+
+    editor-toolbar[data-app-theme='dark'] {
+      ${unsafeCSS(darkToolbarStyles.join('\n'))}
+    }
+    editor-toolbar[data-app-theme='light'] {
+      ${unsafeCSS(lightToolbarStyles.join('\n'))}
     }
   `;
 
@@ -561,6 +572,13 @@ export class AffineToolbarWidget extends WidgetComponent {
           placement$.value = 'top';
           flags.refresh(Flag.Hovering);
         });
+      })
+    );
+
+    // Updates toolbar theme when `app-theme` changing
+    disposables.add(
+      context.theme.app$.subscribe(theme => {
+        toolbar.dataset.appTheme = theme;
       })
     );
 

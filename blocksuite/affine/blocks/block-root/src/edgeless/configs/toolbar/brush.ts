@@ -9,10 +9,7 @@ import {
   LineWidth,
   resolveColor,
 } from '@blocksuite/affine-model';
-import {
-  FeatureFlagService,
-  type ToolbarModuleConfig,
-} from '@blocksuite/affine-shared/services';
+import { type ToolbarModuleConfig } from '@blocksuite/affine-shared/services';
 import {
   getMostCommonResolvedValue,
   getMostCommonValue,
@@ -58,10 +55,8 @@ export const builtinBrushToolbarConfig = {
         const models = ctx.getSurfaceModelsByType(BrushElementModel);
         if (!models.length) return null;
 
-        const enableCustomColor = ctx.std
-          .get(FeatureFlagService)
-          .getFlag('enable_color_picker');
-        const theme = ctx.themeProvider.edgelessTheme;
+        const enableCustomColor = ctx.features.getFlag('enable_color_picker');
+        const theme = ctx.theme.edgeless$.value;
 
         const field = 'color';
         const firstModel = models[0];
