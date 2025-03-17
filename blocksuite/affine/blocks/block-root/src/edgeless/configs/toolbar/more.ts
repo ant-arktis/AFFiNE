@@ -42,14 +42,14 @@ import {
   ResetIcon,
 } from '@blocksuite/icons/lit';
 
-import {
-  createLinkedDocFromEdgelessElements,
-  createLinkedDocFromNote,
-} from '../../../widgets/element-toolbar/more-menu/render-linked-doc';
 import { duplicate } from '../../utils/clipboard-utils';
 import { getSortedCloneElements } from '../../utils/clone-utils';
 import { moveConnectors } from '../../utils/connector';
 import { deleteElements } from '../../utils/crud';
+import {
+  createLinkedDocFromEdgelessElements,
+  createLinkedDocFromNote,
+} from './render-linked-doc';
 import { getEdgelessWith } from './utils';
 
 export const moreActions = [

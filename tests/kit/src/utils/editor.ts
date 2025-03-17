@@ -4,7 +4,6 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 declare type _GLOBAL_ = typeof BlocksuiteEffects;
 
-const EDGELESS_ELEMENT_TOOLBAR_WIDGET = 'edgeless-element-toolbar-widget';
 const EDGELESS_TOOLBAR_WIDGET = 'edgeless-toolbar-widget';
 
 export function locateModeSwitchButton(
@@ -405,12 +404,6 @@ export async function resizeElementByHandle(
   );
   const to: IVec = [from[0] + delta[0], from[1] + delta[1]];
   await dragView(page, from, to, editorIndex);
-}
-
-export function locateElementToolbar(page: Page, editorIndex = 0) {
-  return locateEditorContainer(page, editorIndex).locator(
-    EDGELESS_ELEMENT_TOOLBAR_WIDGET
-  );
 }
 
 /**

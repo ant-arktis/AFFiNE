@@ -20,6 +20,7 @@ export const builtinGroupToolbarConfig = {
     {
       id: 'a.insert-into-page',
       label: 'Insert into Page',
+      showLabel: true,
       tooltip: 'Insert into Page',
       icon: PageIcon(),
       when: ctx => ctx.getSurfaceModelsByType(GroupElementModel).length === 1,

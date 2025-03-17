@@ -25,6 +25,7 @@ export function renderMenu<T>({
 }: Menu<T>) {
   return html`
     <editor-menu-button
+      aria-label="${`${label.toLowerCase()}-menu`}"
       .button=${html`
         <editor-icon-button
           aria-label="${label}"

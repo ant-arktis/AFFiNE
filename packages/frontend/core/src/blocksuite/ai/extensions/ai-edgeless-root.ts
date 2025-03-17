@@ -2,10 +2,7 @@ import {
   BlockFlavourIdentifier,
   LifeCycleWatcher,
 } from '@blocksuite/affine/block-std';
-import {
-  EdgelessElementToolbarWidget,
-  EdgelessRootBlockSpec,
-} from '@blocksuite/affine/blocks/root';
+import { EdgelessRootBlockSpec } from '@blocksuite/affine/blocks/root';
 import { ToolbarModuleExtension } from '@blocksuite/affine/shared/services';
 import type { ExtensionType } from '@blocksuite/affine/store';
 import type { FrameworkProvider } from '@toeverything/infra';
@@ -15,7 +12,6 @@ import { toolbarAIEntryConfig } from '../entries';
 import {
   edgelessToolbarAIEntryConfig,
   setupEdgelessCopilot,
-  setupEdgelessElementToolbarAIEntry,
 } from '../entries/edgeless/index';
 import { setupSpaceAIEntry } from '../entries/space/setup-space';
 import { CopilotTool } from '../tool/copilot-tool';
@@ -71,10 +67,6 @@ function getAIEdgelessRootWatcher(framework: FrameworkProvider) {
 
         if (component instanceof EdgelessCopilotWidget) {
           setupEdgelessCopilot(component);
-        }
-
-        if (component instanceof EdgelessElementToolbarWidget) {
-          setupEdgelessElementToolbarAIEntry(component);
         }
       });
     }

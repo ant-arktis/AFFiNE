@@ -319,7 +319,8 @@ export const builtinConnectorToolbarConfig = {
       ],
     },
     {
-      id: 'g.add-text',
+      id: 'g.text',
+      tooltip: 'Add text',
       icon: AddTextIcon(),
       when(ctx) {
         const models = ctx.getSurfaceModelsByType(ConnectorElementModel);

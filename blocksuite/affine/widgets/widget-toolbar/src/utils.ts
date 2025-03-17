@@ -232,7 +232,7 @@ export function renderToolbar(
           `${flavour}:${key}`,
           html`
             <editor-menu-button
-              class="more-menu"
+              aria-label="more-menu"
               .contentPadding="${'8px'}"
               .button=${html`
                 <editor-icon-button aria-label="More" .tooltip="${'More'}">
@@ -319,7 +319,9 @@ function renderActionItem(action: ToolbarAction, context: ToolbarContext) {
       @click=${() => action.run?.(context)}
     >
       ${action.icon}
-      ${action.label ? html`<span class="label">${action.label}</span>` : null}
+      ${action.showLabel && action.label
+        ? html`<span class="label">${action.label}</span>`
+        : null}
     </editor-icon-button>
   `;
 }

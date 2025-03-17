@@ -85,7 +85,6 @@ import {
 } from './widgets/edgeless-zoom-toolbar/index.js';
 import { ZoomBarToggleButton } from './widgets/edgeless-zoom-toolbar/zoom-bar-toggle-button.js';
 import { EdgelessZoomToolbar } from './widgets/edgeless-zoom-toolbar/zoom-toolbar.js';
-import { effects as widgetEdgelessElementToolbarEffects } from './widgets/element-toolbar/effects.js';
 import { AffineImageToolbar } from './widgets/image-toolbar/components/image-toolbar.js';
 import { AFFINE_IMAGE_TOOLBAR_WIDGET } from './widgets/image-toolbar/index.js';
 import {
@@ -112,7 +111,6 @@ import {
 
 export function effects() {
   // Run other effects
-  widgetEdgelessElementToolbarEffects();
   widgetMobileToolbarEffects();
   widgetLinkedDocEffects();
 

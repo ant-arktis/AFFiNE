@@ -1,6 +1,6 @@
 import { stopPropagation } from '@blocksuite/affine-shared/utils';
 import { PropTypes, requiredProperties } from '@blocksuite/block-std';
-import { SignalWatcher } from '@blocksuite/global/lit';
+import { SignalWatcher, WithDisposable } from '@blocksuite/global/lit';
 import { DoneIcon } from '@blocksuite/icons/lit';
 import type { ReadonlySignal, Signal } from '@preact/signals-core';
 import { css, html, LitElement, type TemplateResult } from 'lit';
@@ -24,7 +24,9 @@ const SIZE_LIST: SizeItem[] = [
 @requiredProperties({
   size$: PropTypes.object,
 })
-export class SizeDropdownMenu extends SignalWatcher(LitElement) {
+export class SizeDropdownMenu extends SignalWatcher(
+  WithDisposable(LitElement)
+) {
   static override styles = css`
     div[data-orientation] {
       width: 68px;
@@ -117,8 +119,23 @@ export class SizeDropdownMenu extends SignalWatcher(LitElement) {
     this.menuButton.hide();
   };
 
+  @query('input')
+  accessor input!: HTMLInputElement;
+
   @query('editor-menu-button')
   accessor menuButton!: EditorMenuButton;
+
+  override firstUpdated() {
+    this.disposables.addFromEvent(
+      this.menuButton,
+      'toggle',
+      (e: CustomEvent<boolean>) => {
+        const opened = e.detail;
+        if (opened) return;
+        this.input.value = '';
+      }
+    );
+  }
 
   override render() {
     const {
@@ -134,6 +151,7 @@ export class SizeDropdownMenu extends SignalWatcher(LitElement) {
 
     return html`
       <editor-menu-button
+        class="${`${label.toLowerCase()}-menu`}"
         .contentPadding="${'8px'}"
         .button=${html`
           <editor-icon-button
@@ -155,7 +173,7 @@ export class SizeDropdownMenu extends SignalWatcher(LitElement) {
             ({ key, value }) => key ?? value,
             ({ key, value }) => html`
               <editor-menu-action
-                aria-label="${key}"
+                aria-label="${key ?? value}"
                 ?data-selected="${size === value}"
                 @click=${() => this.select(value)}
               >
