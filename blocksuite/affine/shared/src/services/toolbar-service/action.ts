@@ -19,6 +19,7 @@ type ActionBase = {
 
 export type ToolbarAction = ActionBase & {
   label?: string;
+  showLabel?: boolean;
   icon?: TemplateResult;
   tooltip?: string | TemplateResult;
   variant?: 'destructive';

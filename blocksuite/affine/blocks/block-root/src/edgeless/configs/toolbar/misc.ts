@@ -66,6 +66,7 @@ export const builtinMiscToolbarConfig = {
       placement: ActionPlacement.Start,
       id: 'b.add-frame',
       label: 'Frame',
+      showLabel: true,
       tooltip: 'Frame',
       icon: FrameIcon(),
       when(ctx) {
@@ -106,6 +107,7 @@ export const builtinMiscToolbarConfig = {
       placement: ActionPlacement.Start,
       id: 'c.add-group',
       label: 'Group',
+      showLabel: true,
       tooltip: 'Group',
       icon: GroupingIcon(),
       when(ctx) {
@@ -166,6 +168,7 @@ export const builtinMiscToolbarConfig = {
     {
       placement: ActionPlacement.End,
       id: 'a.draw-connector',
+      label: 'Draw connector',
       tooltip: 'Draw connector',
       icon: ConnectorCIcon(),
       when(ctx) {
@@ -177,7 +180,7 @@ export const builtinMiscToolbarConfig = {
         const models = ctx.getSurfaceModels();
         if (!models.length) return null;
 
-        const { id, label, icon, tooltip } = this;
+        const { label, icon, tooltip } = this;
 
         const quickConnect = (e: MouseEvent) => {
           e.stopPropagation();
@@ -194,7 +197,7 @@ export const builtinMiscToolbarConfig = {
 
         return html`
           <editor-icon-button
-            data-testid=${id}
+            data-testid="${'draw-connector'}"
             aria-label=${label}
             .tooltip=${tooltip}
             @click=${quickConnect}
@@ -316,6 +319,7 @@ export const builtinLockedToolbarConfig = {
       placement: ActionPlacement.End,
       id: 'b.unlock',
       label: 'Click to unlock',
+      showLabel: true,
       icon: UnlockIcon(),
       run(ctx) {
         const models = ctx.getSurfaceModels();

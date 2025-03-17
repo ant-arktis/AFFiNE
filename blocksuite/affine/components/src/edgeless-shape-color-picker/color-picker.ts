@@ -229,6 +229,7 @@ export class EdgelessShapeColorPicker extends WithDisposable(
                     ({ label, type, value, onPick, hollowCircle }) => html`
                       <div class="picker-label">${label}</div>
                       <edgeless-color-panel
+                        aria-label="${label}"
                         role="listbox"
                         .hasTransparent=${false}
                         .hollowCircle=${hollowCircle}

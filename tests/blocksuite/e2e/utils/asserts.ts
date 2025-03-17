@@ -1197,7 +1197,7 @@ export async function assertConnectorStrokeColor(
   color: string
 ) {
   const colorButton = page
-    .locator('edgeless-change-connector-button')
+    .locator('affine-toolbar-widget editor-toolbar')
     .locator('edgeless-color-panel')
     .locator(`.color-unit[aria-label="${label}"]`)
     .locator('svg');

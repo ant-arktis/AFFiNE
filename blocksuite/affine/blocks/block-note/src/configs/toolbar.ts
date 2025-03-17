@@ -351,6 +351,7 @@ const builtinSurfaceToolbarConfig = {
     },
     {
       id: 'e.slicer',
+      label: 'Slicer',
       icon: ScissorsIcon(),
       tooltip: html`<affine-tooltip-content-with-shortcut
         data-tip="${'Cutting mode'}"
@@ -369,6 +370,7 @@ const builtinSurfaceToolbarConfig = {
     },
     {
       id: 'f.auto-height',
+      label: 'Size',
       when(ctx) {
         const elements = ctx.getSurfaceModelsByType(NoteBlockModel);
         return (
@@ -397,6 +399,8 @@ const builtinSurfaceToolbarConfig = {
         return {
           ...options,
           run(ctx) {
+            ctx.store.captureSync();
+
             for (const model of models) {
               const edgeless = model.props.edgeless;
 
@@ -470,15 +474,12 @@ const builtinSurfaceToolbarConfig = {
         };
         const format = (value: number) => `${value}%`;
 
-        return html`${keyed(
-          firstModel,
-          html`<affine-size-dropdown-menu
-            @select=${onSelect}
-            @toggle=${onToggle}
-            .format=${format}
-            .size$=${scale$}
-          ></affine-size-dropdown-menu>`
-        )}`;
+        return html`<affine-size-dropdown-menu
+          @select=${onSelect}
+          @toggle=${onToggle}
+          .format=${format}
+          .size$=${scale$}
+        ></affine-size-dropdown-menu>`;
       },
     },
   ],

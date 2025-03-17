@@ -54,7 +54,6 @@ import { getSelectedModelsCommand } from '@blocksuite/affine/shared/commands';
 import { ImageSelection } from '@blocksuite/affine/shared/selection';
 import {
   ActionPlacement,
-  FeatureFlagService,
   GenerateDocUrlProvider,
   isRemovedUserInfo,
   OpenDocExtensionIdentifier,
@@ -316,8 +315,7 @@ function createToolbarMoreMenuConfigV2(baseUrl?: string) {
           {
             id: 'block-meta-display',
             when: ctx => {
-              const featureFlag = ctx.std.get(FeatureFlagService);
-              const isEnabled = featureFlag.getFlag('enable_block_meta');
+              const isEnabled = ctx.features.getFlag('enable_block_meta');
               if (!isEnabled) return false;
 
               // only display when one block is selected by block selection

@@ -266,6 +266,7 @@ export function renderAlignmentMenu(
 ) {
   return html`
     <editor-menu-button
+      aria-label="alignment-menu"
       .contentPadding="${'8px'}"
       .button=${html`
         <editor-icon-button

@@ -373,8 +373,16 @@ export class AffineToolbarWidget extends WidgetComponent {
     // Triggered only when not in editing state.
     disposables.add(
       context.gfx.selection.slots.updated.subscribe(selections => {
-        // TODO(@fundon): should remove it when edgeless element toolbar is removed
-        if (context.isEdgelessMode) return;
+        // Should remove selections when clicking on frame navigator
+        if (context.isPageMode) {
+          if (
+            std.host.contains(std.range.value?.commonAncestorContainer ?? null)
+          ) {
+            std.range.clear();
+          }
+          context.reset();
+          return;
+        }
 
         const elementIds = selections
           .map(s => (s.editing || s.inoperable ? [] : s.elements))

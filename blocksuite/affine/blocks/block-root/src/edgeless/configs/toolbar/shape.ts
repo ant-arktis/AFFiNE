@@ -306,6 +306,7 @@ export const builtinShapeToolbarConfig = {
     },
     {
       id: 'f.text',
+      tooltip: 'Add text',
       icon: AddTextIcon(),
       when(ctx) {
         const models = ctx.getSurfaceModelsByType(ShapeElementModel);
