@@ -263,8 +263,13 @@ const DetailPageImpl = memo(function DetailPageImpl() {
   const [dragging, setDragging] = useState(false);
 
   const canEdit = useLiveData(guardService.can$('Doc_Update', doc.id));
+  const canAccess = useLiveData(guardService.can$('Doc_Read', doc.id));
 
   const readonly = !canEdit || isInTrash;
+
+  if (!canAccess) {
+    return <PageNotFound noPermission />;
+  }
 
   return (
     <FrameworkScope scope={editor.scope}>

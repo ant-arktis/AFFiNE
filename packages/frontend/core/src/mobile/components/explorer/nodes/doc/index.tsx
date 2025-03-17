@@ -7,6 +7,7 @@ import { DocsSearchService } from '@affine/core/modules/docs-search';
 import type { NodeOperation } from '@affine/core/modules/explorer';
 import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { GlobalContextService } from '@affine/core/modules/global-context';
+import { GuardService } from '@affine/core/modules/permissions';
 import { useI18n } from '@affine/i18n';
 import {
   LiveData,
@@ -40,12 +41,14 @@ export const ExplorerDocNode = ({
     globalContextService,
     docDisplayMetaService,
     featureFlagService,
+    guardService,
   } = useServices({
     DocsSearchService,
     DocsService,
     GlobalContextService,
     DocDisplayMetaService,
     FeatureFlagService,
+    GuardService,
   });
   const active =
     useLiveData(globalContextService.globalContext.docId.$) === docId;
@@ -57,6 +60,8 @@ export const ExplorerDocNode = ({
       reference: isLinked,
     })
   );
+  const canAccess = useLiveData(guardService.can$('Doc_Read', docId));
+
   const docTitle = useLiveData(docDisplayMetaService.title$(docId));
   const isInTrash = useLiveData(docRecord?.trash$);
   const enableEmojiIcon = useLiveData(
@@ -109,7 +114,7 @@ export const ExplorerDocNode = ({
     return operations;
   }, [additionalOperations, operations]);
 
-  if (isInTrash || !docRecord) {
+  if (isInTrash || !docRecord || !canAccess) {
     return null;
   }
 

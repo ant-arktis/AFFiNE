@@ -3,10 +3,13 @@ import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { JournalService } from '@affine/core/modules/journal';
 import { PeekViewService } from '@affine/core/modules/peek-view/services/peek-view';
 import { useInsidePeekView } from '@affine/core/modules/peek-view/view/modal-container';
+import { GuardService } from '@affine/core/modules/permissions';
 import { WorkbenchLink } from '@affine/core/modules/workbench';
+import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/model';
 import type { Workspace } from '@blocksuite/affine/store';
+import { LinkedPageIcon } from '@blocksuite/icons/rc';
 import { LiveData, useLiveData, useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import { nanoid } from 'nanoid';
@@ -29,6 +32,7 @@ interface AffinePageReferenceProps {
   className?: string;
   Icon?: ComponentType;
   onClick?: (e: MouseEvent) => void;
+  canAccess?: boolean;
 }
 
 function AffinePageReferenceInner({
@@ -36,6 +40,7 @@ function AffinePageReferenceInner({
   params,
   title,
   Icon: UserIcon,
+  canAccess = true,
 }: AffinePageReferenceProps) {
   const docDisplayMetaService = useService(DocDisplayMetaService);
   const docsService = useService(DocsService);
@@ -73,7 +78,12 @@ function AffinePageReferenceInner({
   );
 
   return (
-    <span className={notFound ? styles.notFound : ''}>
+    <span
+      className={clsx({
+        [styles.notFound]: notFound,
+        [styles.noAccess]: !canAccess,
+      })}
+    >
       <Icon className={styles.pageReferenceIcon} />
       <span className="affine-reference-title">{title}</span>
     </span>
@@ -89,7 +99,11 @@ export function AffinePageReference({
   onClick: userOnClick,
 }: AffinePageReferenceProps) {
   const journalService = useService(JournalService);
+  const guardService = useService(GuardService);
+  const canAccess = useLiveData(guardService.can$('Doc_Read', pageId));
   const isJournal = !!useLiveData(journalService.journalDate$(pageId));
+
+  const t = useI18n();
 
   const ref = useRef<HTMLAnchorElement>(null);
 
@@ -100,6 +114,9 @@ export function AffinePageReference({
 
   const onClick = useCallback(
     (e: React.MouseEvent) => {
+      if (!canAccess) {
+        return;
+      }
       userOnClick?.(e);
 
       if (e.defaultPrevented) {
@@ -131,7 +148,7 @@ export function AffinePageReference({
 
       return;
     },
-    [isInPeekView, isJournal, peekView, userOnClick]
+    [canAccess, isInPeekView, isJournal, peekView, userOnClick]
   );
 
   const query = useMemo(() => {
@@ -145,15 +162,20 @@ export function AffinePageReference({
   return (
     <WorkbenchLink
       ref={ref}
-      to={`/${pageId}${query}`}
+      to={canAccess ? `/${pageId}${query}` : `#`}
       onClick={onClick}
       className={clsx(styles.pageReferenceLink, className)}
     >
       <AffinePageReferenceInner
         pageId={pageId}
         params={params}
-        title={title}
-        Icon={Icon}
+        title={
+          canAccess
+            ? title
+            : t['com.affine.share-menu.option.permission.no-access']()
+        }
+        Icon={canAccess ? Icon : LinkedPageIcon}
+        canAccess={canAccess}
       />
     </WorkbenchLink>
   );

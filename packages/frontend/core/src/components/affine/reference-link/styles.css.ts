@@ -20,6 +20,10 @@ export const notFound = style({
   textDecoration: 'line-through',
 });
 
+export const noAccess = style({
+  color: cssVarV2('text/secondary'),
+});
+
 globalStyle('affine-reference .affine-reference', {
   color: 'inherit !important',
   textDecoration: 'none !important',

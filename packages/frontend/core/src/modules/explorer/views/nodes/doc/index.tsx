@@ -77,6 +77,8 @@ export const ExplorerDocNode = ({
     featureFlagService.flags.enable_emoji_doc_icon.$
   );
 
+  const canAccess = useLiveData(guardService.can$('Doc_Read', docId));
+
   const Icon = useCallback(
     ({ className }: { className?: string }) => {
       return <DocIcon className={className} />;
@@ -225,7 +227,7 @@ export const ExplorerDocNode = ({
     return operations;
   }, [additionalOperations, operations]);
 
-  if (isInTrash || !docRecord) {
+  if (isInTrash || !docRecord || !canAccess) {
     return null;
   }
 
@@ -261,15 +263,20 @@ export const ExplorerDocNode = ({
       }}
       onRename={handleRename}
       childrenPlaceholder={
-        searching ? null : <Empty onDrop={handleDropOnPlaceholder} />
+        searching ? null : (
+          <Empty
+            onDrop={handleDropOnPlaceholder}
+            noAccessible={!!children && children.length > 0}
+          />
+        )
       }
       operations={finalOperations}
       dropEffect={handleDropEffectOnDoc}
       data-testid={`explorer-doc-${docId}`}
     >
-      {children?.map(child => (
+      {children?.map((child, index) => (
         <ExplorerDocNode
-          key={child.docId}
+          key={`${child.docId}-${index}`}
           docId={child.docId}
           reorderable={false}
           location={{

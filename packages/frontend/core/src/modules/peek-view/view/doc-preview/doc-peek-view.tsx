@@ -152,8 +152,13 @@ function DocPeekPreviewEditor({
   }, [doc, peekView, workbench]);
 
   const canEdit = useLiveData(guardService.can$('Doc_Update', doc.id));
+  const canAccess = useLiveData(guardService.can$('Doc_Read', doc.id));
 
   const readonly = !canEdit || isInTrash;
+
+  if (!canAccess) {
+    return <PageNotFound noPermission />;
+  }
 
   return (
     <AffineErrorBoundary>
