@@ -15,7 +15,6 @@ import { UserInfo } from './blocks/ai-chat-block/components/user-info';
 import { AIChatBlockSchemaExtension } from './blocks/ai-chat-block/model';
 import { ChatPanel } from './chat-panel';
 import { ActionWrapper } from './chat-panel/actions/action-wrapper';
-import { ChatText } from './chat-panel/actions/chat-text';
 import { ActionImage } from './chat-panel/actions/image';
 import { ActionImageToText } from './chat-panel/actions/image-to-text';
 import { ActionMakeReal } from './chat-panel/actions/make-real';
@@ -81,7 +80,6 @@ export function registerAIEffects() {
   customElements.define('chat-copy-more', ChatCopyMore);
   customElements.define('image-preview-grid', ImagePreviewGrid);
   customElements.define('action-wrapper', ActionWrapper);
-  customElements.define('chat-text', ChatText);
   customElements.define('action-image-to-text', ActionImageToText);
   customElements.define('action-image', ActionImage);
   customElements.define('action-make-real', ActionMakeReal);

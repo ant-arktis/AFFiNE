@@ -1,30 +1,22 @@
+import '../content/assistant-avatar';
+import '../content/rich-text';
+
 import type { EditorHost } from '@blocksuite/affine/block-std';
 import { ShadowlessElement } from '@blocksuite/affine/block-std';
 import { WithDisposable } from '@blocksuite/affine/global/lit';
 import { isInsidePageEditor } from '@blocksuite/affine/shared/utils';
-import { AiIcon } from '@blocksuite/icons/lit';
 import { css, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 
 import {
   EdgelessEditorActions,
   PageEditorActions,
-} from '../_common/chat-actions-handle';
-import { type AIError } from '../components/ai-item/types';
-import { AIChatErrorRenderer } from '../messages/error';
-import { isChatMessage } from './chat-context';
-import { type ChatItem } from './chat-context';
-import { HISTORY_IMAGE_ACTIONS } from './const';
+} from '../../_common/chat-actions-handle';
+import { type AIError } from '../../components/ai-item/types';
+import { AIChatErrorRenderer } from '../../messages/error';
+import { type ChatMessage, isChatMessage } from '../chat-context';
 
-const AffineAvatarIcon = AiIcon({
-  width: '20px',
-  height: '20px',
-  style: 'color: var(--affine-primary-color)',
-});
-
-export class ChatPanelAssistantMessage extends WithDisposable(
-  ShadowlessElement
-) {
+export class ChatMessageAssistant extends WithDisposable(ShadowlessElement) {
   static override styles = css`
     .message-info {
       color: var(--affine-placeholder-color);
@@ -37,7 +29,7 @@ export class ChatPanelAssistantMessage extends WithDisposable(
   accessor host!: EditorHost;
 
   @property({ attribute: false })
-  accessor item!: ChatItem;
+  accessor item!: ChatMessage;
 
   @property({ attribute: false })
   accessor isLast: boolean = false;
@@ -57,18 +49,15 @@ export class ChatPanelAssistantMessage extends WithDisposable(
   @property({ attribute: false })
   accessor retry!: () => void;
 
-  renderAvatar() {
-    const isAssistant =
-      isChatMessage(this.item) && this.item.role === 'assistant';
+  renderHeader() {
     const isWithDocs =
-      isAssistant &&
       'content' in this.item &&
       this.item.content &&
       this.item.content.includes('[^') &&
       /\[\^\d+\]:{"type":"doc","docId":"[^"]+"}/.test(this.item.content);
 
     return html`<div class="user-info">
-      ${AffineAvatarIcon} AFFiNE AI
+      <chat-assistant-avatar></chat-assistant-avatar>
       ${isWithDocs
         ? html`<span class="message-info">with your docs</span>`
         : nothing}
@@ -82,61 +71,28 @@ export class ChatPanelAssistantMessage extends WithDisposable(
       return html`<ai-loading></ai-loading>`;
     }
 
-    if (isChatMessage(item)) {
-      const state = isLast
-        ? status !== 'loading' && status !== 'transmitting'
-          ? 'finished'
-          : 'generating'
-        : 'finished';
-      const shouldRenderError = isLast && status === 'error' && !!error;
-      return html`<chat-text
-          .host=${host}
-          .attachments=${item.attachments}
-          .text=${item.content}
-          .state=${state}
-          .previewSpecBuilder=${this.previewSpecBuilder}
-        ></chat-text>
-        ${shouldRenderError ? AIChatErrorRenderer(host, error) : nothing}
-        ${this.renderEditorActions()}`;
-    } else {
-      switch (item.action) {
-        case 'Create a presentation':
-          return html`<action-slides
-            .host=${host}
-            .item=${item}
-          ></action-slides>`;
-        case 'Make it real':
-          return html`<action-make-real
-            .host=${host}
-            .item=${item}
-          ></action-make-real>`;
-        case 'Brainstorm mindmap':
-          return html`<action-mindmap
-            .host=${host}
-            .item=${item}
-          ></action-mindmap>`;
-        case 'Explain this image':
-        case 'Generate a caption':
-          return html`<action-image-to-text
-            .host=${host}
-            .item=${item}
-          ></action-image-to-text>`;
-        default:
-          if (HISTORY_IMAGE_ACTIONS.includes(item.action)) {
-            return html`<action-image
-              .host=${host}
-              .item=${item}
-            ></action-image>`;
-          }
+    const state = isLast
+      ? status !== 'loading' && status !== 'transmitting'
+        ? 'finished'
+        : 'generating'
+      : 'finished';
+    const shouldRenderError = isLast && status === 'error' && !!error;
 
-          return html`<action-text
-            .item=${item}
-            .host=${host}
-            .isCode=${item.action === 'Explain this code' ||
-            item.action === 'Check code error'}
-          ></action-text>`;
-      }
-    }
+    return html`
+      ${item.attachments
+        ? html`<chat-content-images
+            .images=${item.attachments}
+          ></chat-content-images>`
+        : nothing}
+      <chat-content-rich-text
+        .host=${host}
+        .text=${item.content}
+        .state=${state}
+        .previewSpecBuilder=${this.previewSpecBuilder}
+      ></chat-content-rich-text>
+      ${shouldRenderError ? AIChatErrorRenderer(host, error) : nothing}
+      ${this.renderEditorActions()}
+    `;
   }
 
   renderEditorActions() {
@@ -185,14 +141,16 @@ export class ChatPanelAssistantMessage extends WithDisposable(
 
   protected override render() {
     return html`
-      ${this.renderAvatar()}
+      ${this.renderHeader()}
       <div class="item-wrapper">${this.renderContent()}</div>
     `;
   }
 }
 
+customElements.define('chat-message-assistant', ChatMessageAssistant);
+
 declare global {
   interface HTMLElementTagNameMap {
-    'chat-panel-assistant-message': ChatPanelAssistantMessage;
+    'chat-message-assistant': ChatMessageAssistant;
   }
 }

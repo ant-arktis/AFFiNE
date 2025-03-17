@@ -107,16 +107,22 @@ const collectHistory = async (page: Page) => {
   const chatPanel = await page.waitForSelector('.chat-panel-messages');
   return Promise.all(
     Array.from(
-      await chatPanel.$$('chat-panel-user-message,chat-panel-assistant-message')
+      await chatPanel.$$(
+        'chat-message-user,chat-message-assistant,chat-message-action'
+      )
     ).map(async m => {
       const isAssistant = await m.evaluate(
-        el => el.tagName === 'CHAT-PANEL-ASSISTANT-MESSAGE'
+        el => el.tagName.toLocaleLowerCase() === 'chat-message-assistant'
       );
-      return isAssistant
+      const isChatAction = await m.evaluate(
+        el => el.tagName.toLocaleLowerCase() === 'chat-message-action'
+      );
+
+      return isAssistant || isChatAction
         ? {
             name: await m.$('.user-info').then(i => i?.innerText()),
             content: await m
-              .$('chat-text')
+              .$('chat-content-rich-text')
               .then(t => t?.$('editor-host'))
               .then(e => e?.innerText()),
           }
@@ -136,14 +142,14 @@ const collectChat = async (page: Page) => {
   }
   // wait ai response
   await page.waitForSelector(
-    '.chat-panel-messages chat-panel-assistant-message chat-copy-more',
+    '.chat-panel-messages chat-message-assistant chat-copy-more',
     {
       timeout: ONE_MINUTE,
     }
   );
   await page.waitForTimeout(200);
   await page
-    .locator('.chat-panel-messages > chat-panel-assistant-message')
+    .locator('.chat-panel-messages > chat-message-assistant')
     .last()
     .locator('chat-copy-more');
   await page.waitForTimeout(200);

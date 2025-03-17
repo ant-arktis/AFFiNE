@@ -1,3 +1,5 @@
+import '../content/images';
+
 import type { EditorHost } from '@blocksuite/affine/block-std';
 import { WithDisposable } from '@blocksuite/affine/global/lit';
 import {
@@ -24,7 +26,6 @@ import { property, state } from 'lit/decorators.js';
 
 import { createTextRenderer } from '../../components/text-renderer';
 import type { ChatAction } from '../chat-context';
-import { renderImages } from '../components/images';
 import { HISTORY_IMAGE_ACTIONS } from '../const';
 
 const icons: Record<string, TemplateResult<1>> = {
@@ -141,7 +142,10 @@ export class ActionWrapper extends WithDisposable(LitElement) {
             <div class="answer-prompt">
               <div class="subtitle">Answer</div>
               ${HISTORY_IMAGE_ACTIONS.includes(item.action)
-                ? images && renderImages(images)
+                ? images &&
+                  html`<chat-content-images
+                    .images=${images}
+                  ></chat-content-images>`
                 : nothing}
               ${answer
                 ? createTextRenderer(this.host, { customHeading: true })(answer)
