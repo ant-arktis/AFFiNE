@@ -195,15 +195,16 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
       updateStrategy,
       syncNewHighlights,
     } = info;
-    let action: 'skip' | 'update' | 'new' = 'skip';
-    if (!localUpdatedAt) {
-      action = syncNewHighlights ? 'new' : 'skip';
-    } else if (localUpdatedAt === remoteUpdatedAt) {
-      action = 'skip';
-    } else {
-      action = updateStrategy ? 'update' : 'skip';
-    }
-    return action;
+
+    return !localUpdatedAt
+      ? syncNewHighlights
+        ? 'new'
+        : 'skip'
+      : localUpdatedAt !== remoteUpdatedAt
+        ? updateStrategy
+          ? 'update'
+          : 'skip'
+        : 'skip';
   }
 
   connect(token: string) {
