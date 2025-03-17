@@ -62,3 +62,7 @@ If you want to introduce new job queue, please modify the Queue enum first in ${
 export function getJobHandlerMetadata(target: any): JobName[] {
   return sliceMetadata<JobName>(JOB_METADATA, target);
 }
+
+export enum JOB_SIGNAL {
+  RETRY = 'retry',
+}

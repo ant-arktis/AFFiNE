@@ -1,6 +1,7 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
+import { SendOptions } from '../../base/mailer/mailer';
 import {
   EmailRenderer,
   renderChangeEmailMail,
@@ -31,14 +32,10 @@ import {
   renderVerifyEmailMail,
 } from '../../mails';
 import { WorkspaceProps } from '../../mails/components';
-import { Config } from '../config';
-import { MailerServiceIsNotConfigured } from '../error';
-import { metrics } from '../metrics';
-import type { MailerService, Options } from './mailer';
-import { MAILER_SERVICE } from './mailer';
 
 type Props<T extends EmailRenderer<any>> =
   T extends EmailRenderer<infer P> ? P : never;
+import { Mailer } from '../../base';
 type Sender<T extends EmailRenderer<any>> = (
   to: string,
   props: Props<T>
@@ -46,12 +43,12 @@ type Sender<T extends EmailRenderer<any>> = (
 
 function make<T extends EmailRenderer<any>>(
   sender: {
-    send: (options: Options) => Promise<SMTPTransport.SentMessageInfo>;
+    send: (options: SendOptions) => Promise<any>;
   },
   renderer: T,
   factory?: (props: Props<T>) => {
     props: Props<T>;
-    options: Partial<Options>;
+    options: Partial<SendOptions>;
   }
 ): Sender<T> {
   return async (to, props) => {
@@ -70,42 +67,15 @@ function make<T extends EmailRenderer<any>>(
 }
 
 @Injectable()
-export class MailService {
-  constructor(
-    private readonly config: Config,
-    @Optional() @Inject(MAILER_SERVICE) private readonly mailer?: MailerService
-  ) {}
-
-  readonly send = async (options: Options) => {
-    if (!this.mailer) {
-      throw new MailerServiceIsNotConfigured();
-    }
-
-    metrics.mail.counter('total').add(1);
-    try {
-      const result = await this.mailer.sendMail({
-        from: this.config.mailer?.from,
-        ...options,
-      });
-
-      metrics.mail.counter('sent').add(1);
-
-      return result;
-    } catch (e) {
-      metrics.mail.counter('error').add(1);
-      throw e;
-    }
-  };
-
+export class MailsService {
+  constructor(private readonly mailer: Mailer) {}
   private make<T extends EmailRenderer<any>>(
     renderer: T,
     factory?: (props: Props<T>) => {
       props: Props<T>;
-      options: Partial<Options>;
+      options: Partial<SendOptions>;
     }
-  ) {
-    return make(this, renderer, factory);
-  }
+  ) {}
 
   private readonly convertWorkspaceProps = <
     T extends { workspace: WorkspaceProps },
@@ -137,10 +107,6 @@ export class MailService {
     return this.make(renderer, this.convertWorkspaceProps);
   }
 
-  hasConfigured() {
-    return !!this.mailer;
-  }
-
   // User mails
   sendSignUpMail = this.make(renderSignUpMail);
   sendSignInMail = this.make(renderSignInMail);
@@ -149,7 +115,7 @@ export class MailService {
   sendChangeEmailMail = this.make(renderChangeEmailMail);
   sendVerifyChangeEmail = this.make(renderVerifyChangeEmailMail);
   sendVerifyEmail = this.make(renderVerifyEmailMail);
-  sendNotificationChangeEmail = make(this, renderChangeEmailNotificationMail);
+  sendNotificationChangeEmail = this.make(renderChangeEmailNotificationMail);
 
   // =================== Workspace Mails ===================
   sendMemberInviteMail = this.makeWorkspace(renderMemberInvitationMail);

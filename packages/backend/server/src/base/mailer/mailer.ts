@@ -1,33 +1,65 @@
-import { FactoryProvider, Logger } from '@nestjs/common';
-import { createTransport, Transporter } from 'nodemailer';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  createTestAccount,
+  createTransport,
+  getTestMessageUrl,
+  SendMailOptions,
+  Transporter,
+} from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 import { Config } from '../config';
+import { metrics } from '../metrics';
 
-export const MAILER_SERVICE = Symbol('MAILER_SERVICE');
+export type SendOptions = SendMailOptions;
 
-export type MailerService = Transporter<SMTPTransport.SentMessageInfo>;
-export type Response = SMTPTransport.SentMessageInfo;
-export type Options = SMTPTransport.Options;
+@Injectable()
+export class Mailer implements OnModuleInit {
+  private readonly logger = new Logger(Mailer.name);
+  private smtp: Transporter<SMTPTransport.SentMessageInfo> | null = null;
+  private usingTestAccount = false;
+  constructor(private readonly config: Config) {}
 
-export const MAILER: FactoryProvider<
-  Transporter<SMTPTransport.SentMessageInfo> | undefined
-> = {
-  provide: MAILER_SERVICE,
-  useFactory: (config: Config) => {
-    if (config.mailer) {
-      const logger = new Logger('Mailer');
-      const auth = config.mailer.auth;
-      if (auth && auth.user && !('pass' in auth)) {
-        logger.warn(
-          'Mailer service has not configured password, please make sure your mailer service allow empty password.'
-        );
-      }
+  onModuleInit() {
+    this.createSMTP();
+  }
 
-      return createTransport(config.mailer);
-    } else {
-      return undefined;
+  createSMTP() {
+    if (this.config.mailer.host) {
+      this.smtp = createTransport(this.config.mailer);
+    } else if (this.config.node.dev) {
+      createTestAccount((err, account) => {
+        if (!err) {
+          this.smtp = createTransport({
+            ...account.smtp,
+            auth: {
+              user: account.user,
+              pass: account.pass,
+            },
+          });
+          this.usingTestAccount = true;
+        }
+      });
     }
-  },
-  inject: [Config],
-};
+    this.logger.warn('Mailer SMTP transport is not configured.');
+    return null;
+  }
+
+  async send(options: SendOptions) {
+    if (!this.smtp) {
+      this.logger.warn(`Mailer SMTP transport is not configured to send mail.`);
+      return null;
+    }
+
+    const result = await this.smtp.sendMail({
+      from: this.config.mailer.from,
+      ...options,
+    });
+
+    if (this.usingTestAccount && result.accepted.length > 0) {
+      this.logger.debug(`Mail preview url: ${getTestMessageUrl(result)}`);
+    }
+
+    return result;
+  }
+}

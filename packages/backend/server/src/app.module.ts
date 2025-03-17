@@ -28,7 +28,7 @@ import { GqlModule } from './base/graphql';
 import { HelpersModule } from './base/helpers';
 import { JobModule } from './base/job';
 import { LoggerModule } from './base/logger';
-import { MailModule } from './base/mailer';
+import { MailerModule } from './base/mailer';
 import { MetricsModule } from './base/metrics';
 import { MutexModule } from './base/mutex';
 import { PrismaModule } from './base/prisma';
@@ -101,7 +101,7 @@ export const FunctionalityModules = [
   PrismaModule,
   MetricsModule,
   RateLimiterModule,
-  MailModule,
+  MailerModule,
   StorageProviderModule,
   HelpersModule,
   ErrorModule,
