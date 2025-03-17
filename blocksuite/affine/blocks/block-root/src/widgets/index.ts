@@ -21,6 +21,5 @@ export {
 export { AffineLinkedDocWidget } from './linked-doc/index.js';
 export { AffineModalWidget } from './modal/modal.js';
 export { AffinePageDraggingAreaWidget } from './page-dragging-area/page-dragging-area.js';
-export { AffineSurfaceRefToolbar } from './surface-ref-toolbar/surface-ref-toolbar.js';
 export * from './viewport-overlay/viewport-overlay.js';
 export { AffineFrameTitleWidget } from '@blocksuite/affine-widget-frame-title';

@@ -1,3 +1,4 @@
+import type { SurfaceBlockComponent } from '@blocksuite/affine-block-surface';
 import {
   CopyIcon,
   DeleteIcon,
@@ -6,8 +7,8 @@ import {
 import { toast } from '@blocksuite/affine-components/toast';
 import type { MenuItemGroup } from '@blocksuite/affine-components/toolbar';
 import { downloadBlob } from '@blocksuite/affine-shared/utils';
+import { GfxControllerIdentifier } from '@blocksuite/block-std/gfx';
 
-import type { EdgelessRootPreviewBlockComponent } from '../../edgeless/edgeless-root-preview-block.js';
 import type { SurfaceRefToolbarContext } from './context.js';
 import { edgelessToBlob, writeImageBlobToClipboard } from './utils.js';
 
@@ -28,10 +29,15 @@ export const BUILT_IN_GROUPS: MenuItemGroup<SurfaceRefToolbarContext>[] = [
 
           const referencedModel = ctx.blockComponent.referenceModel;
           const editor = ctx.blockComponent.previewEditor;
-          const edgelessRootElement = editor?.view.getBlock(ctx.doc.root.id);
-          const surfaceRenderer = (
-            edgelessRootElement as EdgelessRootPreviewBlockComponent
-          )?.surface?.renderer;
+          const surfaceModel = editor?.std.get(GfxControllerIdentifier).surface;
+          if (!surfaceModel) {
+            ctx.close();
+            return;
+          }
+          const surfaceBlock = editor?.std.view.getBlock(
+            surfaceModel.id
+          ) as SurfaceBlockComponent;
+          const surfaceRenderer = surfaceBlock.renderer;
 
           if (!surfaceRenderer) {
             ctx.close();
@@ -62,10 +68,15 @@ export const BUILT_IN_GROUPS: MenuItemGroup<SurfaceRefToolbarContext>[] = [
 
           const referencedModel = ctx.blockComponent.referenceModel;
           const editor = ctx.blockComponent.previewEditor;
-          const edgelessRootElement = editor?.view.getBlock(ctx.doc.root.id);
-          const surfaceRenderer = (
-            edgelessRootElement as EdgelessRootPreviewBlockComponent
-          )?.surface?.renderer;
+          const surfaceModel = editor?.std.get(GfxControllerIdentifier).surface;
+          if (!surfaceModel) {
+            ctx.close();
+            return;
+          }
+          const surfaceBlock = editor?.std.view.getBlock(
+            surfaceModel.id
+          ) as SurfaceBlockComponent;
+          const surfaceRenderer = surfaceBlock.renderer;
 
           if (!surfaceRenderer) {
             ctx.close();

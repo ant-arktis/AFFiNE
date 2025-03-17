@@ -102,10 +102,6 @@ import {
   AffinePageDraggingAreaWidget,
 } from './widgets/page-dragging-area/page-dragging-area.js';
 import {
-  AFFINE_SURFACE_REF_TOOLBAR,
-  AffineSurfaceRefToolbar,
-} from './widgets/surface-ref-toolbar/surface-ref-toolbar.js';
-import {
   AFFINE_VIEWPORT_OVERLAY_WIDGET,
   AffineViewportOverlayWidget,
 } from './widgets/viewport-overlay/viewport-overlay.js';
@@ -156,7 +152,6 @@ function registerWidgets() {
     AFFINE_EDGELESS_ZOOM_TOOLBAR_WIDGET,
     AffineEdgelessZoomToolbarWidget
   );
-  customElements.define(AFFINE_SURFACE_REF_TOOLBAR, AffineSurfaceRefToolbar);
 }
 
 function registerEdgelessToolbarComponents() {
