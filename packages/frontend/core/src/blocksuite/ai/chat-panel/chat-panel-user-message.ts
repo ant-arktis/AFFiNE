@@ -1,77 +1,100 @@
-import type { EditorHost } from '@blocksuite/affine/block-std';
 import { ShadowlessElement } from '@blocksuite/affine/block-std';
 import { WithDisposable } from '@blocksuite/affine/global/lit';
 import { css, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 
-import { type ChatItem, isChatMessage } from './chat-context';
+import { type ChatMessage } from './chat-context';
 
 export class ChatPanelUserMessage extends WithDisposable(ShadowlessElement) {
   static override styles = css`
-    .avatar-container {
-      width: 24px;
-      height: 24px;
+    .message {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
     }
 
-    .avatar {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background-color: var(--affine-primary-color);
+    .images {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 4px;
+      scrollbar-width: auto;
     }
 
-    .avatar-container img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
+    .images::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .images::-webkit-scrollbar-thumb {
+      background-color: var(--affine-border-color);
+      border-radius: 4px;
+    }
+
+    .images::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    img {
+      max-width: 180px;
+      max-height: 264px;
       object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .text-content {
+      display: inline-block;
+      text-align: left;
+      max-width: 800px;
+      max-height: 500px;
+      overflow-y: auto;
+      background: var(--affine-v2-aI-userTextBackground);
+      border-radius: 8px;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   `;
 
   @property({ attribute: false })
-  accessor host!: EditorHost;
+  accessor item!: ChatMessage;
 
-  @property({ attribute: false })
-  accessor item!: ChatItem;
+  renderImages(images: string[]) {
+    return images.length > 0
+      ? html`<div class="images">
+          ${repeat(
+            images,
+            image => image,
+            image => {
+              return html`<img src="${image}" />`;
+            }
+          )}
+        </div>`
+      : nothing;
+  }
 
-  @property({ attribute: false })
-  accessor avatarUrl: string = '';
-
-  @property({ attribute: false })
-  accessor previewSpecBuilder: any;
-
-  renderAvatar() {
-    return html`<div class="user-info">
-      <div class="avatar-container">
-        ${this.avatarUrl
-          ? html`<img .src=${this.avatarUrl} />`
-          : html`<div class="avatar"></div>`}
-      </div>
-      You
-    </div>`;
+  renderText(text: string) {
+    return text.length > 0
+      ? html`<div class="text-content">${text}</div>`
+      : nothing;
   }
 
   renderContent() {
-    const { host, item } = this;
+    const { item } = this;
 
-    if (isChatMessage(item)) {
-      return html`<chat-text
-        .host=${host}
-        .attachments=${item.attachments}
-        .text=${item.content}
-        .state=${'finished'}
-        .previewSpecBuilder=${this.previewSpecBuilder}
-      ></chat-text>`;
-    }
-
-    return nothing;
+    const imagesRendered = item.attachments
+      ? this.renderImages(item.attachments)
+      : nothing;
+    return html` ${imagesRendered} ${this.renderText(item.content)} `;
   }
 
   protected override render() {
-    return html`
-      ${this.renderAvatar()}
-      <div class="item-wrapper">${this.renderContent()}</div>
-    `;
+    return html` <div class="message">${this.renderContent()}</div> `;
   }
 }
 

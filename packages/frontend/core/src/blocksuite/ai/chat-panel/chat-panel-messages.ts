@@ -123,10 +123,6 @@ export class ChatPanelMessages extends WithDisposable(ShadowlessElement) {
       white-space: nowrap;
     }
 
-    .message {
-      display: contents;
-    }
-
     .down-indicator {
       position: absolute;
       left: 50%;
@@ -258,25 +254,20 @@ export class ChatPanelMessages extends WithDisposable(ShadowlessElement) {
               (_, index) => index,
               (item, index) => {
                 const isLast = index === filteredItems.length - 1;
-                return html`<div class="message">
-                  ${isChatMessage(item) && item.role === 'user'
-                    ? html`<chat-panel-user-message
-                        .host=${this.host}
-                        .item=${item}
-                        .avatarUrl=${this.avatarUrl}
-                        .previewSpecBuilder=${this.previewSpecBuilder}
-                      ></chat-panel-user-message>`
-                    : html`<chat-panel-assistant-message
-                        .host=${this.host}
-                        .item=${item}
-                        .isLast=${isLast}
-                        .status=${status}
-                        .error=${error}
-                        .previewSpecBuilder=${this.previewSpecBuilder}
-                        .getSessionId=${this.getSessionId}
-                        .retry=${() => this.retry()}
-                      ></chat-panel-assistant-message>`}
-                </div>`;
+                return isChatMessage(item) && item.role === 'user'
+                  ? html`<chat-panel-user-message
+                      .item=${item}
+                    ></chat-panel-user-message>`
+                  : html`<chat-panel-assistant-message
+                      .host=${this.host}
+                      .item=${item}
+                      .isLast=${isLast}
+                      .status=${status}
+                      .error=${error}
+                      .previewSpecBuilder=${this.previewSpecBuilder}
+                      .getSessionId=${this.getSessionId}
+                      .retry=${() => this.retry()}
+                    ></chat-panel-assistant-message>`;
               }
             )}
       </div>

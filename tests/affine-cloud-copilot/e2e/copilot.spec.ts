@@ -106,13 +106,25 @@ const clearChat = async (page: Page) => {
 const collectHistory = async (page: Page) => {
   const chatPanel = await page.waitForSelector('.chat-panel-messages');
   return Promise.all(
-    Array.from(await chatPanel.$$('.message')).map(async m => ({
-      name: await m.$('.user-info').then(i => i?.innerText()),
-      content: await m
-        .$('chat-text')
-        .then(t => t?.$('editor-host'))
-        .then(e => e?.innerText()),
-    }))
+    Array.from(
+      await chatPanel.$$('chat-panel-user-message,chat-panel-assistant-message')
+    ).map(async m => {
+      const isAssistant = await m.evaluate(
+        el => el.tagName === 'CHAT-PANEL-ASSISTANT-MESSAGE'
+      );
+      return isAssistant
+        ? {
+            name: await m.$('.user-info').then(i => i?.innerText()),
+            content: await m
+              .$('chat-text')
+              .then(t => t?.$('editor-host'))
+              .then(e => e?.innerText()),
+          }
+        : {
+            name: 'You',
+            content: await m.$('.text-content').then(i => i?.innerText()),
+          };
+    })
   );
 };
 
@@ -123,12 +135,17 @@ const collectChat = async (page: Page) => {
     return [];
   }
   // wait ai response
-  await page.waitForSelector('.chat-panel-messages .message chat-copy-more', {
-    timeout: ONE_MINUTE,
-  });
+  await page.waitForSelector(
+    '.chat-panel-messages chat-panel-assistant-message chat-copy-more',
+    {
+      timeout: ONE_MINUTE,
+    }
+  );
   await page.waitForTimeout(200);
-  const lastMessage = await chatPanel.$$('.message').then(m => m[m.length - 1]);
-  await lastMessage.waitForSelector('chat-copy-more');
+  await page
+    .locator('.chat-panel-messages > chat-panel-assistant-message')
+    .last()
+    .locator('chat-copy-more');
   await page.waitForTimeout(200);
   return collectHistory(page);
 };
