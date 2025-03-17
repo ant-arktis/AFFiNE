@@ -7266,6 +7266,58 @@ export function useAFFiNEI18N(): {
         readonly finished: string;
     }): string;
     /**
+      * `Configuration`
+      */
+    ["com.affine.integration.readwise.setting.caption"](): string;
+    /**
+      * `New Readwise highlights will be imported to AFFiNE `
+      */
+    ["com.affine.integration.readwise.setting.sync-new-name"](): string;
+    /**
+      * `New highlights in Readwise will be synced to AFFiNE `
+      */
+    ["com.affine.integration.readwise.setting.sync-new-desc"](): string;
+    /**
+      * `Updates to Readwise highlights will be imported`
+      */
+    ["com.affine.integration.readwise.setting.update-name"](): string;
+    /**
+      * `Enable this, so that we will process updates of existing highlights from Readwise `
+      */
+    ["com.affine.integration.readwise.setting.update-desc"](): string;
+    /**
+      * `How do we handle updates`
+      */
+    ["com.affine.integration.readwise.setting.update-strategy"](): string;
+    /**
+      * `Append new version to the end`
+      */
+    ["com.affine.integration.readwise.setting.update-append-name"](): string;
+    /**
+      * `Cited or modified highlights will have future versions added to the end of them`
+      */
+    ["com.affine.integration.readwise.setting.update-append-desc"](): string;
+    /**
+      * `Overwrite with new version`
+      */
+    ["com.affine.integration.readwise.setting.update-override-name"](): string;
+    /**
+      * `Cited or modified highlights will be overwritten if there are future updates`
+      */
+    ["com.affine.integration.readwise.setting.update-override-desc"](): string;
+    /**
+      * `Start Importing`
+      */
+    ["com.affine.integration.readwise.setting.start-import-name"](): string;
+    /**
+      * `Using the settings above`
+      */
+    ["com.affine.integration.readwise.setting.start-import-desc"](): string;
+    /**
+      * `Import`
+      */
+    ["com.affine.integration.readwise.setting.start-import-button"](): string;
+    /**
       * `Author`
       */
     ["com.affine.integration.readwise-prop.author"](): string;
