@@ -7274,6 +7274,18 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.integration.readwise-prop.source"](): string;
     /**
+      * `Created`
+      */
+    ["com.affine.integration.readwise-prop.created"](): string;
+    /**
+      * `Updated`
+      */
+    ["com.affine.integration.readwise-prop.updated"](): string;
+    /**
+      * `Integration properties`
+      */
+    ["com.affine.integration.properties"](): string;
+    /**
       * `An internal error occurred.`
       */
     ["error.INTERNAL_SERVER_ERROR"](): string;
