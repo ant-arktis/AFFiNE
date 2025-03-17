@@ -80,6 +80,10 @@ export interface ReadwiseConfig {
    */
   lastImportedAt?: string;
   /**
+   * Whether to sync new highlights
+   */
+  syncNewHighlights?: boolean;
+  /**
    * The update strategy
    */
   updateStrategy?: 'override' | 'append';

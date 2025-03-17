@@ -5,7 +5,6 @@ import { useService } from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
 import * as styles from './connected.css';
-import { ImportDialog } from './import-dialog';
 import { actionButton } from './index.css';
 
 export const DisconnectDialog = ({ onClose }: { onClose: () => void }) => {
@@ -54,23 +53,16 @@ export const DisconnectDialog = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-export const ConnectedActions = () => {
+export const ConnectedActions = ({ onImport }: { onImport: () => void }) => {
   const t = useI18n();
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
 
   return (
     <>
       {showDisconnectDialog && (
         <DisconnectDialog onClose={() => setShowDisconnectDialog(false)} />
       )}
-      {showImportDialog && (
-        <ImportDialog onClose={() => setShowImportDialog(false)} />
-      )}
-      <Button
-        className={actionButton}
-        onClick={() => setShowImportDialog(true)}
-      >
+      <Button className={actionButton} onClick={onImport}>
         {t['com.affine.integration.readwise.import']()}
       </Button>
       <Button

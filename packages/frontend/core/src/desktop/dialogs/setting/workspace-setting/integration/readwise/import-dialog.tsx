@@ -286,6 +286,12 @@ const HighlightTable = ({
     useState<
       Record<ReadwiseHighlight['id'], ReadwiseHighlight['updated_at']>
     >();
+  const syncNewHighlights = useLiveData(
+    useMemo(() => readwise.setting$('syncNewHighlights'), [readwise])
+  );
+  const updateStrategy = useLiveData(
+    useMemo(() => readwise.setting$('updateStrategy'), [readwise])
+  );
 
   useEffect(() => {
     readwise
@@ -336,6 +342,12 @@ const HighlightTable = ({
           const highlight = highlights[idx];
           const localUpdatedAt = updatedMap?.[highlight.id];
           const readwiseUpdatedAt = highlight.updated_at;
+          const action = readwise.getAction({
+            localUpdatedAt,
+            remoteUpdatedAt: readwiseUpdatedAt,
+            updateStrategy,
+            syncNewHighlights,
+          });
           return (
             <li className={styles.tableBodyRow}>
               <div className={styles.tableCellSelect}>
@@ -363,11 +375,11 @@ const HighlightTable = ({
                 </a>
               </div>
               <div className={styles.tableCellTodo}>
-                {!localUpdatedAt ? (
+                {action === 'new' ? (
                   <span className={styles.todoNew}>
                     {t['com.affine.integration.readwise.import.todo-new']()}
                   </span>
-                ) : localUpdatedAt === readwiseUpdatedAt ? (
+                ) : action === 'skip' ? (
                   <span className={styles.todoSkip}>
                     {t['com.affine.integration.readwise.import.todo-skip']()}
                   </span>

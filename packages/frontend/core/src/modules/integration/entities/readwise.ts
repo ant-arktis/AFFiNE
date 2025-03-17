@@ -30,6 +30,13 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
 
   importing$ = new LiveData(false);
   settings$ = LiveData.from(this.readwiseStore.watchSetting(), undefined);
+
+  setting$<T extends keyof ReadwiseConfig>(
+    key: T
+  ): LiveData<ReadwiseConfig[T]> {
+    return this.settings$.selector(setting => setting?.[key]);
+  }
+
   updateSetting<T extends keyof ReadwiseConfig>(
     key: T,
     value: ReadwiseConfig[T]
@@ -77,6 +84,8 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
         localRefs.map(ref => [ref.refMeta.highlightId, ref])
       );
       const updateStrategy = this.readwiseStore.getSetting('updateStrategy');
+      const syncNewHighlights =
+        this.readwiseStore.getSetting('syncNewHighlights');
       const chunks = chunk(highlights, 2);
       const total = highlights.length;
       let finished = 0;
@@ -99,8 +108,14 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
             const refMeta = localRef?.refMeta;
             const localUpdatedAt = refMeta?.updatedAt;
             const localDocId = localRef?.id;
+            const action = this.getAction({
+              localUpdatedAt,
+              remoteUpdatedAt: highlight.updated_at,
+              updateStrategy,
+              syncNewHighlights,
+            });
             // write if not matched
-            if (localUpdatedAt !== highlight.updated_at && !signal?.aborted) {
+            if (action !== 'skip' && !signal?.aborted) {
               await this.highlightToAffineDoc(highlight, book, localDocId, {
                 updateStrategy,
                 integrationId,
@@ -139,7 +154,7 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
       title: book.title,
       docId,
       comment: highlight.note,
-      updateStrategy,
+      updateStrategy: updateStrategy ?? 'append',
     });
 
     // write failed
@@ -168,8 +183,42 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
     });
   }
 
+  getAction(info: {
+    localUpdatedAt?: string;
+    remoteUpdatedAt?: string;
+    updateStrategy?: ReadwiseConfig['updateStrategy'];
+    syncNewHighlights?: ReadwiseConfig['syncNewHighlights'];
+  }) {
+    const {
+      localUpdatedAt,
+      remoteUpdatedAt,
+      updateStrategy,
+      syncNewHighlights,
+    } = info;
+    let action: 'skip' | 'update' | 'new' = 'skip';
+    if (!localUpdatedAt) {
+      action = syncNewHighlights ? 'new' : 'skip';
+    } else if (localUpdatedAt === remoteUpdatedAt) {
+      action = 'skip';
+    } else {
+      action = updateStrategy ? 'update' : 'skip';
+    }
+    return action;
+  }
+
+  connect(token: string) {
+    this.readwiseStore.setSettings({
+      token,
+      updateStrategy: 'append',
+      syncNewHighlights: true,
+    });
+  }
+
   disconnect() {
-    this.readwiseStore.setSetting('token', undefined);
-    this.readwiseStore.setSetting('lastImportedAt', undefined);
+    this.readwiseStore.setSettings({
+      token: undefined,
+      updateStrategy: undefined,
+      syncNewHighlights: undefined,
+    });
   }
 }
