@@ -13,7 +13,18 @@ export class ChatMessageUser extends WithDisposable(ShadowlessElement) {
     .message {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+    }
+
+    .chat-content-images {
+      display: flex;
+
+      .images-row {
+        margin-left: auto;
+      }
+    }
+
+    .text-content-wrapper {
+      align-self: flex-end;
     }
   `;
 
@@ -26,10 +37,13 @@ export class ChatMessageUser extends WithDisposable(ShadowlessElement) {
     return html`
       ${item.attachments
         ? html`<chat-content-images
+            class="chat-content-images"
             .images=${item.attachments}
           ></chat-content-images>`
         : nothing}
-      <chat-content-pure-text .text=${item.content}></chat-content-pure-text>
+      <div class="text-content-wrapper">
+        <chat-content-pure-text .text=${item.content}></chat-content-pure-text>
+      </div>
     `;
   }
 

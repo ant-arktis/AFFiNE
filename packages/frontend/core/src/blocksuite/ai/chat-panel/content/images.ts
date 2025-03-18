@@ -1,5 +1,6 @@
 import { ShadowlessElement } from '@blocksuite/affine/block-std';
 import { WithDisposable } from '@blocksuite/affine/global/lit';
+import { unsafeCSSVar } from '@blocksuite/affine/shared/theme';
 import { css, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -23,7 +24,7 @@ export class ChatContentImages extends WithDisposable(ShadowlessElement) {
     }
 
     .images-row::-webkit-scrollbar-thumb {
-      background-color: var(--affine-border-color);
+      background-color: ${unsafeCSSVar('borderColor')};
       border-radius: 4px;
     }
 

@@ -1,4 +1,5 @@
 import { ShadowlessElement } from '@blocksuite/affine/block-std';
+import { unsafeCSSVar, unsafeCSSVarV2 } from '@blocksuite/affine/shared/theme';
 import { css, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 
@@ -10,11 +11,26 @@ export class ChatContentPureText extends ShadowlessElement {
       max-width: 800px;
       max-height: 500px;
       overflow-y: auto;
-      background: var(--affine-v2-aI-userTextBackground);
+      overflow-x: hidden;
+      background: ${unsafeCSSVarV2('aI/userTextBackground')};
       border-radius: 8px;
       padding: 12px;
       white-space: pre-wrap;
       word-wrap: break-word;
+      scrollbar-width: auto;
+    }
+
+    .text-content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .text-content::-webkit-scrollbar-thumb {
+      background-color: ${unsafeCSSVar('borderColor')};
+      border-radius: 3px;
+    }
+
+    .text-content::-webkit-scrollbar-track {
+      background: transparent;
     }
   `;
 

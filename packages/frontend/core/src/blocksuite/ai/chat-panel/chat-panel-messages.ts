@@ -60,10 +60,6 @@ export class ChatPanelMessages extends WithDisposable(ShadowlessElement) {
       user-select: none;
     }
 
-    .item-wrapper {
-      margin-left: 32px;
-    }
-
     .messages-placeholder {
       width: 100%;
       position: absolute;
