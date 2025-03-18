@@ -9,7 +9,6 @@ import {
   NOTE_SLICER_WIDGET,
   NoteSlicer,
 } from './edgeless/components/note-slicer/index.js';
-import { CardStylePanel } from './edgeless/components/panel/card-style-panel.js';
 import { EdgelessFontFamilyPanel } from './edgeless/components/panel/font-family-panel.js';
 import { EdgelessFontWeightAndStylePanel } from './edgeless/components/panel/font-weight-and-style-panel.js';
 import { EdgelessLineWidthPanel } from './edgeless/components/panel/line-width-panel.js';
@@ -220,7 +219,6 @@ function registerEdgelessToolbarComponents() {
 }
 
 function registerEdgelessPanelComponents() {
-  customElements.define('card-style-panel', CardStylePanel);
   customElements.define('edgeless-line-width-panel', EdgelessLineWidthPanel);
   customElements.define(
     'edgeless-font-weight-and-style-panel',
@@ -317,7 +315,6 @@ declare global {
     'edgeless-toolbar-button': EdgelessToolbarButton;
     'edgeless-connector-handle': EdgelessConnectorHandle;
     'note-slicer': NoteSlicer;
-    'card-style-panel': CardStylePanel;
     'edgeless-font-family-panel': EdgelessFontFamilyPanel;
     'edgeless-font-weight-and-style-panel': EdgelessFontWeightAndStylePanel;
     'edgeless-line-width-panel': EdgelessLineWidthPanel;
