@@ -1,16 +1,14 @@
-import type { PointerEventState } from '@blocksuite/block-std';
-import type { GfxElementModelView } from '@blocksuite/block-std/gfx';
 import { Bound } from '@blocksuite/global/gfx';
 import last from 'lodash-es/last';
 
-import { DefaultModeDragType, DefaultToolExt } from './ext.js';
+import type { PointerEventState } from '../../../event';
+import type { GfxElementModelView } from '../../view/view';
+import { TransformExtension } from '../transform-manager';
 
-export class CanvasElementEventExt extends DefaultToolExt {
+export class CanvasEventHandler extends TransformExtension {
+  static override key = 'canvas-event-handler';
+
   private _currentStackedElm: GfxElementModelView[] = [];
-
-  override supportedDragTypes: DefaultModeDragType[] = [
-    DefaultModeDragType.None,
-  ];
 
   private _callInReverseOrder(
     callback: (view: GfxElementModelView) => void,

@@ -20,6 +20,14 @@ export type DragExtensionInitializeContext = {
    * Prevent the default drag behavior. The following drag events will not be triggered.
    */
   preventDefault: () => void;
+
+  /**
+   * The start position of the drag in model space.
+   */
+  dragStartPos: Readonly<{
+    x: number;
+    y: number;
+  }>;
 };
 
 export type ExtensionBaseEvent = {

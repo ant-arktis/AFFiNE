@@ -8,8 +8,11 @@ import { Bound, Point } from '@blocksuite/global/gfx';
 import { DisposableGroup } from '@blocksuite/global/slot';
 import { Extension } from '@blocksuite/store';
 
+import type { PointerEventState } from '../../event/state/pointer.js';
+import { type GfxController } from '../controller.js';
 import { GfxExtension, GfxExtensionIdentifier } from '../extension.js';
-import { type GfxController, GfxControllerIdentifier } from '../index.js';
+import { GfxControllerIdentifier } from '../identifiers.js';
+import { type SupportedEvent } from '../view/view.js';
 import type {
   DragExtensionInitializeContext,
   DragInitializationOption,
@@ -18,9 +21,27 @@ import type {
   ExtensionDragStartContext,
 } from './drag.js';
 
+type ExtensionPointerHandler = Exclude<
+  SupportedEvent,
+  'pointerleave' | 'pointerenter'
+>;
+
 export const TransformManagerIdentifier = GfxExtensionIdentifier(
   'element-transform-manager'
 ) as ServiceIdentifier<ElementTransformManager>;
+
+const CAMEL_CASE_MAP: {
+  [key in ExtensionPointerHandler]: keyof Pick<
+    TransformExtension,
+    'click' | 'dblClick' | 'pointerDown' | 'pointerMove' | 'pointerUp'
+  >;
+} = {
+  click: 'click',
+  dblclick: 'dblClick',
+  pointerdown: 'pointerDown',
+  pointermove: 'pointerMove',
+  pointerup: 'pointerUp',
+};
 
 export class ElementTransformManager extends GfxExtension {
   static override key = 'element-transform-manager';
@@ -35,6 +56,10 @@ export class ElementTransformManager extends GfxExtension {
     this._disposable.dispose();
   }
 
+  get transformExtensions() {
+    return this.std.provider.getAll(TransformExtensionIdentifier);
+  }
+
   get keyboard() {
     return this.gfx.keyboard;
   }
@@ -47,8 +72,23 @@ export class ElementTransformManager extends GfxExtension {
     }
   }
 
+  dispatch(eventName: ExtensionPointerHandler, evt: PointerEventState) {
+    const transformExtensions = this.transformExtensions;
+
+    transformExtensions.forEach(ext => {
+      const handlerMethodName = CAMEL_CASE_MAP[eventName];
+
+      if (ext[handlerMethodName]) {
+        this._safeExecute(() => {
+          ext[handlerMethodName](evt);
+        }, `Error while executing extension \`${handlerMethodName}\` handler`);
+      }
+    });
+  }
+
   initializeDrag(options: DragInitializationOption) {
     let cancelledByExt = false;
+
     const context: DragExtensionInitializeContext = {
       /**
        * The elements that are being dragged
@@ -58,15 +98,22 @@ export class ElementTransformManager extends GfxExtension {
       preventDefault: () => {
         cancelledByExt = true;
       },
+
+      dragStartPos: Point.from(
+        this.gfx.viewport.toModelCoordFromClientCoord([
+          options.event.x,
+          options.event.y,
+        ])
+      ),
     };
-    const extension = this.std.provider.getAll(TransformExtensionIdentifier);
+    const extension = this.transformExtensions;
     const activeExtensionHandlers = Array.from(
       extension.values().map(ext => {
         return ext.onDragInitialize(context);
       })
     );
 
-    if (cancelledByExt || context.elements.length === 0) {
+    if (cancelledByExt) {
       activeExtensionHandlers.forEach(handler => handler.clear?.());
       return;
     }
@@ -214,6 +261,16 @@ export class TransformExtension extends Extension {
   mounted() {}
 
   unmounted() {}
+
+  click(_: PointerEventState) {}
+
+  dblClick(_: PointerEventState) {}
+
+  pointerDown(_: PointerEventState) {}
+
+  pointerMove(_: PointerEventState) {}
+
+  pointerUp(_: PointerEventState) {}
 
   onDragInitialize(_: DragExtensionInitializeContext): {
     onDragStart?: (context: ExtensionDragStartContext) => void;

@@ -5,44 +5,46 @@ import {
   OverlayIdentifier,
   type SurfaceBlockComponent,
 } from '@blocksuite/affine-block-surface';
-import {
-  type LayoutType,
-  type LocalConnectorElementModel,
+import type {
+  LayoutType,
+  LocalConnectorElementModel,
   MindmapElementModel,
-  type MindmapNode,
+  MindmapNode,
 } from '@blocksuite/affine-model';
-import type { PointerEventState } from '@blocksuite/block-std';
 import {
+  type DragExtensionInitializeContext,
+  type ExtensionDragEndContext,
+  type ExtensionDragMoveContext,
+  type ExtensionDragStartContext,
   type GfxModel,
   type GfxPrimitiveElementModel,
   isGfxGroupCompatibleModel,
+  TransformExtension,
 } from '@blocksuite/block-std/gfx';
 import type { Bound, IVec } from '@blocksuite/global/gfx';
 
-import { isSingleMindMapNode } from '../../../utils/mindmap.js';
-import { isMindmapNode } from '../../../utils/query.js';
-import { DefaultModeDragType, DefaultToolExt, type DragState } from '../ext.js';
-import { calculateResponseArea } from './drag-utils.js';
-import type { MindMapIndicatorOverlay } from './indicator-overlay.js';
+import { isSingleMindMapNode } from '../utils/mindmap';
+import { isMindmapNode } from '../utils/query';
+import { calculateResponseArea } from './utils/drag-utils';
+import type { MindMapIndicatorOverlay } from './utils/indicator-overlay';
 
 type DragMindMapCtx = {
   mindmap: MindmapElementModel;
   node: MindmapNode;
-  clear: () => void;
   /**
    * Whether the dragged node is the root node of the mind map
    */
   isRoot: boolean;
   originalMindMapBound: Bound;
-  startPoint: PointerEventState;
 };
 
-export class MindMapExt extends DefaultToolExt {
+export class MindMapDragExtension extends TransformExtension {
+  static override key = 'mind-map-drag';
+  /**
+   * The response area of the mind map is calculated in real time.
+   * It only needs to be calculated once when the mind map is dragged.
+   */
   private readonly _responseAreaUpdated = new Set<MindmapElementModel>();
-
-  override supportedDragTypes: DefaultModeDragType[] = [
-    DefaultModeDragType.ContentMoving,
-  ];
 
   private get _indicatorOverlay() {
     return this.std.getOptional(
@@ -62,9 +64,8 @@ export class MindMapExt extends DefaultToolExt {
    * @returns
    */
   private _createManipulationHandlers(dragMindMapCtx: DragMindMapCtx): {
-    dragStart?: (evt: PointerEventState) => void;
-    dragMove?: (evt: PointerEventState) => void;
-    dragEnd?: (evt: PointerEventState) => void;
+    onDragMove?: (context: ExtensionDragMoveContext) => void;
+    onDragEnd?: (context: ExtensionDragEndContext) => void;
   } {
     let hoveredCtx: {
       mindmap: MindmapElementModel | null;
@@ -75,8 +76,8 @@ export class MindMapExt extends DefaultToolExt {
     } | null = null;
 
     return {
-      dragMove: (_: PointerEventState) => {
-        const [x, y] = this.defaultTool.dragLastPos;
+      onDragMove: (context: ExtensionDragMoveContext) => {
+        const { x, y } = context.dragLastPos;
         const hoveredMindMap = this._getHoveredMindMap([x, y], dragMindMapCtx);
         const indicator = this._indicatorOverlay;
 
@@ -166,18 +167,15 @@ export class MindMapExt extends DefaultToolExt {
           }
         }
       },
-      dragEnd: (e: PointerEventState) => {
+      onDragEnd: (dragEndContext: ExtensionDragEndContext) => {
         if (hoveredCtx?.merge) {
           hoveredCtx.merge();
         } else {
           hoveredCtx?.abort?.();
 
           if (hoveredCtx?.detach) {
-            const [startX, startY] = this.gfx.viewport.toModelCoord(
-              dragMindMapCtx.startPoint.x,
-              dragMindMapCtx.startPoint.y
-            );
-            const [endX, endY] = this.gfx.viewport.toModelCoord(e.x, e.y);
+            const { x: startX, y: startY } = dragEndContext.dragStartPos;
+            const { x: endX, y: endY } = dragEndContext.dragLastPos;
 
             dragMindMapCtx.node.element.xywh =
               dragMindMapCtx.node.element.elementBound
@@ -204,7 +202,6 @@ export class MindMapExt extends DefaultToolExt {
         }
 
         hoveredCtx = null;
-        dragMindMapCtx.clear();
         this._responseAreaUpdated.clear();
       },
     };
@@ -213,24 +210,21 @@ export class MindMapExt extends DefaultToolExt {
   /**
    * Create handlers that can translate entire mind map
    */
-  private _createTranslationHandlers(
-    _: DragState,
-    ctx: {
-      mindmaps: Set<MindmapElementModel>;
-      nodes: Set<GfxModel>;
-    }
-  ): {
-    dragStart?: (evt: PointerEventState) => void;
-    dragMove?: (evt: PointerEventState) => void;
-    dragEnd?: (evt: PointerEventState) => void;
+  private _createTranslationHandlers(ctx: {
+    mindmaps: Set<MindmapElementModel>;
+    nodes: Set<GfxModel>;
+  }): {
+    onDragStart?: (context: ExtensionDragStartContext) => void;
+    onDragMove?: (context: ExtensionDragMoveContext) => void;
+    onDragEnd?: (context: ExtensionDragEndContext) => void;
   } {
     return {
-      dragStart: (_: PointerEventState) => {
+      onDragStart: () => {
         ctx.nodes.forEach(node => {
           node.stash('xywh');
         });
       },
-      dragEnd: (_: PointerEventState) => {
+      onDragEnd: () => {
         ctx.mindmaps.forEach(mindmap => {
           mindmap.layout();
         });
@@ -317,7 +311,7 @@ export class MindMapExt extends DefaultToolExt {
 
   private _setupDragNodeImage(
     mindmapNode: MindmapNode,
-    event: PointerEventState
+    pos: { x: number; y: number }
   ) {
     const surfaceBlock = this.gfx.surfaceComponent as SurfaceBlockComponent;
     const renderer = surfaceBlock?.renderer;
@@ -329,7 +323,6 @@ export class MindMapExt extends DefaultToolExt {
 
     const nodeBound = mindmapNode.element.elementBound;
 
-    const pos = this.gfx.viewport.toModelCoord(event.x, event.y);
     const canvas = renderer.getCanvasByBound(
       mindmapNode.element.elementBound,
       [mindmapNode.element],
@@ -338,7 +331,7 @@ export class MindMapExt extends DefaultToolExt {
       false
     );
 
-    indicatorOverlay.dragNodePos = [nodeBound.x - pos[0], nodeBound.y - pos[1]];
+    indicatorOverlay.dragNodePos = [nodeBound.x - pos.x, nodeBound.y - pos.y];
     indicatorOverlay.dragNodeImage = canvas;
 
     return () => {
@@ -385,14 +378,10 @@ export class MindMapExt extends DefaultToolExt {
     };
   }
 
-  override initDrag(dragState: DragState) {
-    if (dragState.dragType !== DefaultModeDragType.ContentMoving) {
-      return {};
-    }
-
-    if (isSingleMindMapNode(dragState.movedElements)) {
-      const mindmap = dragState.movedElements[0].group as MindmapElementModel;
-      const mindmapNode = mindmap.getNode(dragState.movedElements[0].id)!;
+  override onDragInitialize(context: DragExtensionInitializeContext) {
+    if (isSingleMindMapNode(context.elements)) {
+      const mindmap = context.elements[0].group as MindmapElementModel;
+      const mindmapNode = mindmap.getNode(context.elements[0].id)!;
       const mindmapBound = mindmap.elementBound;
       const isRoot = mindmapNode === mindmap.tree;
 
@@ -405,34 +394,36 @@ export class MindMapExt extends DefaultToolExt {
 
       const clearDragStatus = isRoot
         ? mindmap.stashTree(mindmapNode)
-        : this._setupDragNodeImage(mindmapNode, dragState.event);
+        : this._setupDragNodeImage(mindmapNode, context.dragStartPos);
       const clearOpacity = this._updateNodeOpacity(mindmap, mindmapNode);
 
       if (!isRoot) {
-        dragState.movedElements.splice(0, 1);
+        context.elements.splice(0, 1);
       }
 
       const mindMapDragCtx: DragMindMapCtx = {
         mindmap,
         node: mindmapNode,
         isRoot,
-        clear: () => {
+        originalMindMapBound: mindmapBound,
+      };
+
+      return {
+        ...this._createManipulationHandlers(mindMapDragCtx),
+        clear() {
           clearOpacity();
           clearDragStatus?.();
           if (!isRoot) {
-            dragState.movedElements.push(mindmapNode.element);
+            context.elements.push(mindmapNode.element);
           }
         },
-        originalMindMapBound: mindmapBound,
-        startPoint: dragState.event,
       };
-
-      return this._createManipulationHandlers(mindMapDragCtx);
     }
 
     const mindmapNodes = new Set<GfxModel>();
     const mindmaps = new Set<MindmapElementModel>();
-    dragState.movedElements.forEach(el => {
+
+    context.elements.forEach(el => {
       if (isMindmapNode(el)) {
         const mindmap =
           el.group instanceof MindmapElementModel
@@ -452,8 +443,8 @@ export class MindMapExt extends DefaultToolExt {
     });
 
     if (mindmapNodes.size > 1) {
-      mindmapNodes.forEach(node => dragState.movedElements.push(node));
-      return this._createTranslationHandlers(dragState, {
+      mindmapNodes.forEach(node => context.elements.push(node));
+      return this._createTranslationHandlers({
         mindmaps,
         nodes: mindmapNodes,
       });

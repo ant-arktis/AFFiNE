@@ -1,16 +1,20 @@
 import { PresentTool } from '@blocksuite/affine-block-frame';
 import { ConnectionOverlay } from '@blocksuite/affine-block-surface';
 import { TextTool } from '@blocksuite/affine-gfx-text';
-import { ElementTransformManager } from '@blocksuite/block-std/gfx';
+import {
+  CanvasEventHandler,
+  ElementTransformManager,
+} from '@blocksuite/block-std/gfx';
 import type { ExtensionType } from '@blocksuite/store';
 
 import { EdgelessRootBlockSpec } from './edgeless-root-spec.js';
 import { ConnectorFilter } from './element-transform/connector-filter.js';
+import { MindMapDragExtension } from './element-transform/mind-map-drag.js';
 import { SnapExtension } from './element-transform/snap-manager.js';
+import { MindMapIndicatorOverlay } from './element-transform/utils/indicator-overlay.js';
 import { BrushTool } from './gfx-tool/brush-tool.js';
 import { ConnectorTool } from './gfx-tool/connector-tool.js';
 import { DefaultTool } from './gfx-tool/default-tool.js';
-import { MindMapIndicatorOverlay } from './gfx-tool/default-tool-ext/mind-map-ext/indicator-overlay.js';
 import { EmptyTool } from './gfx-tool/empty-tool.js';
 import { EraserTool } from './gfx-tool/eraser-tool.js';
 import { FrameTool } from './gfx-tool/frame-tool.js';
@@ -42,6 +46,8 @@ export const EdgelessEditExtensions: ExtensionType[] = [
   ElementTransformManager,
   ConnectorFilter,
   SnapExtension,
+  CanvasEventHandler,
+  MindMapDragExtension,
 ];
 
 export const EdgelessBuiltInManager: ExtensionType[] = [

@@ -56,10 +56,7 @@ import {
   mountGroupTitleEditor,
   mountShapeTextEditor,
 } from '../utils/text.js';
-import { CanvasElementEventExt } from './default-tool-ext/event-ext.js';
-import type { DefaultToolExt } from './default-tool-ext/ext.js';
 import { DefaultModeDragType } from './default-tool-ext/ext.js';
-import { MindMapExt } from './default-tool-ext/mind-map-ext/mind-map-ext.js';
 
 export class DefaultTool extends BaseTool {
   static override toolName: string = 'default';
@@ -81,14 +78,6 @@ export class DefaultTool extends BaseTool {
   };
 
   private _disposables: DisposableGroup | null = null;
-
-  private _extHandlers: {
-    dragStart?: (evt: PointerEventState) => void;
-    dragMove?: (evt: PointerEventState) => void;
-    dragEnd?: (evt: PointerEventState) => void;
-  }[] = [];
-
-  private _exts: DefaultToolExt[] = [];
 
   // Do not select the text, when click again after activating the note.
   private _isDoubleClickedOnMask = false;
@@ -211,12 +200,6 @@ export class DefaultTool extends BaseTool {
     const block = this.std.view.getBlock(this.doc.root!.id);
 
     return (block as EdgelessRootBlockComponent) ?? null;
-  }
-
-  private get _supportedExts() {
-    return this._exts.filter(ext =>
-      ext.supportedDragTypes.includes(this.dragType)
-    );
   }
 
   /**
@@ -435,14 +418,6 @@ export class DefaultTool extends BaseTool {
     this._clearDisposable();
     this._disposables = new DisposableGroup();
 
-    const ctx = {
-      movedElements: this._toBeMoved,
-      dragType,
-      event,
-    };
-
-    this._extHandlers = this._supportedExts.map(ext => ext.initDrag(ctx));
-
     // If the drag type is selecting, set up the dragging area disposable group
     // If the viewport updates when dragging, should update the dragging area and selection
     if (this.dragType === DefaultModeDragType.Selecting) {
@@ -573,7 +548,7 @@ export class DefaultTool extends BaseTool {
     }
 
     this._isDoubleClickedOnMask = false;
-    this._supportedExts.forEach(ext => ext.click?.(e));
+    this.elementTransformMgr?.dispatch('click', e);
   }
 
   override deactivate() {
@@ -650,7 +625,7 @@ export class DefaultTool extends BaseTool {
       }
     }
 
-    this._supportedExts.forEach(ext => ext.click?.(e));
+    this.elementTransformMgr?.dispatch('dblclick', e);
 
     if (
       e.raw.target &&
@@ -664,8 +639,6 @@ export class DefaultTool extends BaseTool {
   }
 
   override dragEnd(e: PointerEventState) {
-    this._extHandlers.forEach(handler => handler.dragEnd?.(e));
-
     if (this._lock) {
       this.doc.captureSync();
       this._lock = false;
@@ -698,7 +671,6 @@ export class DefaultTool extends BaseTool {
       }
       case DefaultModeDragType.AltCloning:
       case DefaultModeDragType.ContentMoving: {
-        this._extHandlers.forEach(handler => handler.dragMove?.(e));
         break;
       }
       case DefaultModeDragType.ConnectorLabelMoving: {
@@ -747,8 +719,6 @@ export class DefaultTool extends BaseTool {
 
     // Set up drag state
     this.initializeDragState(dragType, e);
-
-    this._extHandlers.forEach(handler => handler.dragStart?.(e));
   }
 
   override mounted() {
@@ -772,15 +742,10 @@ export class DefaultTool extends BaseTool {
         }
       })
     );
-
-    this._exts = [MindMapExt, CanvasElementEventExt].map(
-      constructor => new constructor(this)
-    );
-    this._exts.forEach(ext => ext.mounted());
   }
 
   override pointerDown(e: PointerEventState): void {
-    this._supportedExts.forEach(ext => ext.pointerDown(e));
+    this.elementTransformMgr?.dispatch('pointerdown', e);
   }
 
   override pointerMove(e: PointerEventState) {
@@ -799,20 +764,18 @@ export class DefaultTool extends BaseTool {
       this.frameOverlay.clear();
     }
 
-    this._supportedExts.forEach(ext => ext.pointerMove(e));
+    this.elementTransformMgr?.dispatch('pointermove', e);
   }
 
   override pointerUp(e: PointerEventState) {
-    this._supportedExts.forEach(ext => ext.pointerUp(e));
+    this.elementTransformMgr?.dispatch('pointerup', e);
   }
 
   override tripleClick() {
     if (this._isDoubleClickedOnMask) return;
   }
 
-  override unmounted(): void {
-    this._exts.forEach(ext => ext.unmounted());
-  }
+  override unmounted(): void {}
 }
 
 declare module '@blocksuite/block-std/gfx' {

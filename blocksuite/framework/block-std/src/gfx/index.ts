@@ -19,6 +19,7 @@ export type {
   ExtensionDragMoveContext,
   ExtensionDragStartContext,
 } from './element-transform/drag.js';
+export { CanvasEventHandler } from './element-transform/extension/canvas-event-handler.js';
 export {
   ElementTransformManager,
   TransformExtension,
