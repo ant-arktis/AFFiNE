@@ -19,13 +19,12 @@ import {
   CopilotTextProvider,
   PromptMessage,
 } from '../types';
-import { readBufferFromStream } from '../utils';
 import {
-  checkTranscriptionAudioExceeded,
   TranscriptConfigSchema,
   TranscriptionConfig,
   TranscriptionSchema,
 } from './types';
+import { readStream } from './utils';
 
 @Injectable()
 export class CopilotTranscriptionService {
@@ -60,10 +59,7 @@ export class CopilotTranscriptionService {
       type: CopilotJobType.Transcription,
     });
 
-    const buffer = await readBufferFromStream(
-      blob.createReadStream(),
-      checkTranscriptionAudioExceeded
-    );
+    const buffer = await readStream(blob.createReadStream());
     const url = await this.storage.put(userId, workspaceId, blobId, buffer);
 
     await this.models.copilotJob.update(jobId, {

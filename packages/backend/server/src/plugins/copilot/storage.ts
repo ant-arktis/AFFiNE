@@ -8,12 +8,12 @@ import {
   CallMetric,
   Config,
   type FileUpload,
+  readBuffer,
   type StorageProvider,
   StorageProviderFactory,
   URLHelper,
 } from '../../base';
 import { QuotaService } from '../../core/quota';
-import { readBufferFromStream } from './utils';
 
 @Injectable()
 export class CopilotStorage {
@@ -64,10 +64,7 @@ export class CopilotStorage {
       throw new BlobQuotaExceeded();
     }
 
-    const buffer = await readBufferFromStream(
-      blob.createReadStream(),
-      checkExceeded
-    );
+    const buffer = await readBuffer(blob.createReadStream(), checkExceeded);
 
     return {
       buffer,

@@ -34,7 +34,3 @@ declare global {
 }
 
 export const MAX_TRANSCRIPTION_SIZE = 50 * OneMB;
-
-export function checkTranscriptionAudioExceeded(recvSize: number) {
-  return recvSize > MAX_TRANSCRIPTION_SIZE;
-}

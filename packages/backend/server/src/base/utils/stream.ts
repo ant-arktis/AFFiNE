@@ -1,8 +1,8 @@
 import { Readable } from 'node:stream';
 
-import { BlobQuotaExceeded } from '../../base';
+import { BlobQuotaExceeded } from '../error';
 
-export async function readBufferFromStream(
+export async function readBuffer(
   readable: Readable,
   checkExceeded: (recvSize: number) => boolean
 ): Promise<Buffer> {
@@ -33,4 +33,11 @@ export async function readBufferFromStream(
       }
     });
   });
+}
+
+export async function readBufferWithLimit(
+  readable: Readable,
+  limit: number
+): Promise<Buffer> {
+  return readBuffer(readable, size => size > limit);
 }
