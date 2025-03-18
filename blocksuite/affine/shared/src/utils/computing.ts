@@ -11,13 +11,13 @@ export function getMostCommonValue<T, F extends keyof T>(
   return record?.[field];
 }
 
-export function getMostCommonResolvedValue<
-  T,
-  F extends Exclude<keyof T, symbol>,
-  U,
->(records: T[], field: F, resolve: (value: T[F]) => U) {
+export function getMostCommonResolvedValue<T, F extends keyof T, U>(
+  records: T[],
+  field: F,
+  resolve: (value: T[F]) => U
+) {
   return getMostCommonValue(
     records.map(record => ({ [field]: resolve(record[field]) })),
-    field
+    String(field)
   );
 }
