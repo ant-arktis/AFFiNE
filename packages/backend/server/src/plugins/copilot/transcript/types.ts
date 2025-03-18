@@ -26,12 +26,9 @@ declare global {
       jobId: string;
       url: string;
       mimeType: string;
-      retry?: number;
     };
     'copilot.summary.submit': {
       jobId: string;
-      transcription: Transcription;
-      retry?: number;
     };
   }
 }

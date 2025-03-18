@@ -6,7 +6,6 @@ import {
   CopilotTranscriptionJobExists,
   type FileUpload,
   JobQueue,
-  mapAnyError,
   NoCopilotProviderAvailable,
   OnJob,
 } from '../../../base';
@@ -71,11 +70,16 @@ export class CopilotTranscriptionService {
       status: AiJobStatus.running,
     });
 
-    await this.job.add('copilot.transcript.submit', {
-      jobId,
-      url,
-      mimeType: blob.mimetype,
-    });
+    await this.job.add(
+      'copilot.transcript.submit',
+      {
+        jobId,
+        url,
+        mimeType: blob.mimetype,
+      },
+      // retry 3 times
+      { removeOnFail: 3 }
+    );
 
     return jobId;
   }
@@ -88,8 +92,8 @@ export class CopilotTranscriptionService {
     status?: AiJobStatus;
   } | null> {
     const status = await this.models.copilotJob.claim(jobId, userId);
-    if (status === AiJobStatus.claim) {
-      const transcription = await this.models.copilotJob.getConfig(
+    if (status === AiJobStatus.claimed) {
+      const transcription = await this.models.copilotJob.getPayload(
         jobId,
         TranscriptConfigSchema
       );
@@ -147,73 +151,43 @@ export class CopilotTranscriptionService {
     jobId,
     url,
     mimeType,
-    retry,
   }: Jobs['copilot.transcript.submit']) {
-    try {
-      const result = await this.chatWithPrompt('Transcript audio', {
-        attachments: [url],
-        params: { mimetype: mimeType },
-      });
+    const result = await this.chatWithPrompt('Transcript audio', {
+      attachments: [url],
+      params: { mimetype: mimeType },
+    });
 
-      const transcription = TranscriptionSchema.parse(
-        JSON.parse(this.cleanupResponse(result))
-      );
-      await this.models.copilotJob.update(jobId, { config: { transcription } });
+    const transcription = TranscriptionSchema.parse(
+      JSON.parse(this.cleanupResponse(result))
+    );
+    await this.models.copilotJob.update(jobId, { payload: { transcription } });
 
-      await this.job.add('copilot.summary.submit', {
+    await this.job.add(
+      'copilot.summary.submit',
+      {
         jobId,
-        transcription,
-      });
-    } catch (e: any) {
-      if (retry === undefined || retry < 3) {
-        // retry 3 times if an error occurs
-        // such as the model returning content that does not conform to the schema
-        await this.job.add('copilot.transcript.submit', {
-          jobId,
-          url,
-          mimeType,
-          retry: (retry ?? 0) + 1,
-        });
-        return;
-      }
-      const error = mapAnyError(e);
-      error.log('Failed to transcription in job', { jobId, url, mimeType });
-
-      await this.models.copilotJob.update(jobId, {
-        status: AiJobStatus.failed,
-      });
-    }
+      },
+      // retry 3 times
+      { removeOnFail: 3 }
+    );
   }
 
   @OnJob('copilot.summary.submit')
-  async summaryTranscription({
-    jobId,
-    transcription,
-    retry,
-  }: Jobs['copilot.summary.submit']) {
-    try {
-      const content = transcription.map(t => t.transcription).join('\n');
+  async summaryTranscription({ jobId }: Jobs['copilot.summary.submit']) {
+    const payload = await this.models.copilotJob.getPayload(
+      jobId,
+      TranscriptConfigSchema
+    );
+    if (payload.transcription) {
+      const content = payload.transcription
+        .map(t => t.transcription)
+        .join('\n');
+
       const result = await this.chatWithPrompt('Summary', { content });
 
-      const config = await this.models.copilotJob.getConfig(
-        jobId,
-        TranscriptConfigSchema
-      );
-      config.summary = this.cleanupResponse(result);
-      await this.models.copilotJob.update(jobId, { config });
-    } catch (e: any) {
-      if (retry === undefined || retry < 3) {
-        // retry 3 times if an error occurs
-        // such as the model returning content that does not conform to the schema
-        await this.job.add('copilot.summary.submit', {
-          jobId,
-          transcription,
-          retry: (retry ?? 0) + 1,
-        });
-        return;
-      }
-      const error = mapAnyError(e);
-      error.log('Failed to summary in job', { jobId });
+      payload.summary = this.cleanupResponse(result);
+      await this.models.copilotJob.update(jobId, { payload });
+    } else {
       await this.models.copilotJob.update(jobId, {
         status: AiJobStatus.failed,
       });
