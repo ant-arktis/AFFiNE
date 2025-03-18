@@ -151,7 +151,7 @@ export class EmbedLinkedDocBlockComponent extends EmbedBlockComponent<EmbedLinke
     ]);
   };
 
-  covertToInline = () => {
+  convertToInline = () => {
     const { doc } = this.model;
     const parent = doc.getParent(this.model);
     if (!parent) {

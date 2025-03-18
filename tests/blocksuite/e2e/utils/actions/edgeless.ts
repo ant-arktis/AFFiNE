@@ -1327,7 +1327,7 @@ export async function triggerComponentToolbarAction(
     }
     case 'openLinkedDoc': {
       const openButton = locatorComponentToolbar(page).getByRole('button', {
-        name: 'Open',
+        name: 'Open doc',
       });
       await openButton.click();
 
