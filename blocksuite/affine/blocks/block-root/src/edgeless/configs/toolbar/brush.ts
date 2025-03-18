@@ -63,14 +63,14 @@ export const builtinBrushToolbarConfig = {
           .getFlag('enable_color_picker');
         const theme = ctx.themeProvider.edgelessTheme;
 
+        const field = 'color';
         const firstModel = models[0];
+        const originalColor = firstModel[field];
         const color =
-          getMostCommonResolvedValue(models, 'color', color =>
+          getMostCommonResolvedValue(models, field, color =>
             resolveColor(color, theme)
           ) ?? resolveColor(DefaultTheme.black, theme);
         const onPick = (e: PickColorEvent) => {
-          const field = 'color';
-
           if (e.type === 'pick') {
             const color = e.detail.value;
             for (const model of models) {
@@ -94,7 +94,7 @@ export const builtinBrushToolbarConfig = {
             .pick=${onPick}
             .color=${color}
             .theme=${theme}
-            .originalColor=${firstModel.color}
+            .originalColor=${originalColor}
             .enableCustomColor=${enableCustomColor}
           >
           </edgeless-color-picker-button>

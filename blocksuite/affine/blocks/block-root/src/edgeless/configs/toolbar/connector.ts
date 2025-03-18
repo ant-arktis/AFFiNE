@@ -1,4 +1,8 @@
-import { EdgelessCRUDIdentifier } from '@blocksuite/affine-block-surface';
+import {
+  ConnectorUtils,
+  EdgelessCRUDIdentifier,
+  TextUtils,
+} from '@blocksuite/affine-block-surface';
 import {
   packColor,
   type PickColorEvent,
@@ -20,12 +24,14 @@ import {
 import {
   FeatureFlagService,
   type ToolbarContext,
+  type ToolbarGenericAction,
   type ToolbarModuleConfig,
 } from '@blocksuite/affine-shared/services';
 import {
   getMostCommonResolvedValue,
   getMostCommonValue,
 } from '@blocksuite/affine-shared/utils';
+import { Bound } from '@blocksuite/global/gfx';
 import {
   AddTextIcon,
   ConnectorCIcon,
@@ -48,6 +54,7 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { EdgelessRootBlockComponent } from '../..';
 import { mountConnectorLabelEditor } from '../../utils/text';
 import { LINE_STYLE_LIST } from './consts';
+import { createTextActions } from './text-common';
 import type { MenuItem } from './types';
 import { renderMenu } from './utils';
 
@@ -129,19 +136,18 @@ export const builtinConnectorToolbarConfig = {
           .getFlag('enable_color_picker');
         const theme = ctx.themeProvider.edgelessTheme;
 
+        const field = 'stroke';
         const firstModel = models[0];
         const strokeWidth =
           getMostCommonValue(models, 'strokeWidth') ?? LineWidth.Four;
         const strokeStyle =
           getMostCommonValue(models, 'strokeStyle') ?? StrokeStyle.Solid;
         const stroke =
-          getMostCommonResolvedValue(models, 'stroke', stroke =>
+          getMostCommonResolvedValue(models, field, stroke =>
             resolveColor(stroke, theme)
           ) ?? resolveColor(DefaultTheme.connectorColor, theme);
 
         const onPickColor = (e: PickColorEvent) => {
-          const field = 'stroke';
-
           if (e.type === 'pick') {
             const color = e.detail.value;
             for (const model of models) {
@@ -341,14 +347,60 @@ export const builtinConnectorToolbarConfig = {
         mountConnectorLabelEditor(model, edgeless);
       },
     },
-    {
-      id: 'g.text',
+    // id: `g.text`
+    ...createTextActions(
+      ConnectorElementModel,
+      'connector',
+      (ctx, model, props) => {
+        if (!ConnectorUtils.isConnectorWithLabel(model)) return;
+
+        const labelStyle = { ...model.labelStyle, ...props };
+
+        // No need to adjust element bounds
+        if (props['textAlign']) {
+          ctx.std.get(EdgelessCRUDIdentifier).updateElement(model.id, {
+            labelStyle,
+          });
+          return;
+        }
+
+        const { fontFamily, fontStyle, fontSize, fontWeight } = labelStyle;
+        const {
+          text,
+          labelXYWH,
+          labelConstraints: { hasMaxWidth, maxWidth },
+        } = model;
+        const prevBounds = Bound.fromXYWH(labelXYWH || [0, 0, 16, 16]);
+        const center = prevBounds.center;
+        const bounds = TextUtils.normalizeTextBound(
+          {
+            yText: text!,
+            fontFamily,
+            fontStyle,
+            fontSize,
+            fontWeight,
+            hasMaxWidth,
+            maxWidth,
+          },
+          prevBounds
+        );
+        bounds.center = center;
+
+        ctx.std.get(EdgelessCRUDIdentifier).updateElement(model.id, {
+          labelStyle,
+          labelXYWH: bounds.toXYWH(),
+        });
+      },
+      model => model.labelStyle,
+      (model, type, _) => model[type]('labelStyle')
+    ).map<ToolbarGenericAction>(action => ({
+      ...action,
+      id: `g.text-${action.id}`,
       when(ctx) {
         const models = ctx.getSurfaceModelsByType(ConnectorElementModel);
-        return models.length > 0 && !models.some(model => !model.text);
+        return models.length > 0 && models.every(model => model.hasLabel());
       },
-      // TODO(@fundon): text actoins
-    },
+    })),
   ],
 
   when: ctx => ctx.getSurfaceModelsByType(ConnectorElementModel).length > 0,
