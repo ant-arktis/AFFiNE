@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { AiJobStatus } from '@prisma/client';
 import type { ZodType } from 'zod';
 
@@ -30,6 +31,17 @@ export class CopilotJobModel extends BaseModel {
     return row;
   }
 
+  async has(workspaceId: string, blobId: string, type?: CopilotJobType) {
+    const row = await this.db.aiJobs.findFirst({
+      where: {
+        workspaceId,
+        blobId,
+        type,
+      },
+    });
+    return !!row;
+  }
+
   async update(jobId: string, data: UpdateCopilotJobInput) {
     const ret = await this.db.aiJobs.updateMany({
       where: {
@@ -41,6 +53,50 @@ export class CopilotJobModel extends BaseModel {
       },
     });
     return ret.count > 0;
+  }
+
+  @Transactional()
+  async claim(jobId: string, userId: string) {
+    const job = await this.get(jobId);
+
+    if (
+      job &&
+      job.createdBy === userId &&
+      job.status === AiJobStatus.finished
+    ) {
+      await this.update(jobId, { status: AiJobStatus.finished });
+    }
+
+    const ret = await this.db.aiJobs.findFirst({
+      where: { id: jobId },
+      select: { status: true },
+    });
+    return ret?.status;
+  }
+
+  async list(userId: string, workspaceId: string, type?: CopilotJobType) {
+    const jobs = await this.db.aiJobs.findMany({
+      where: {
+        workspaceId,
+        type,
+        OR: [
+          {
+            createdBy: userId,
+            status: { in: [AiJobStatus.finished, AiJobStatus.claimed] },
+          },
+          { createdBy: { not: userId }, status: AiJobStatus.claimed },
+        ],
+      },
+      select: {
+        id: true,
+        workspaceId: true,
+        blobId: true,
+        createdBy: true,
+        type: true,
+        status: true,
+      },
+    });
+    return jobs;
   }
 
   async get(jobId: string): Promise<CopilotJob | null> {
