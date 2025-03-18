@@ -74,18 +74,7 @@ export class NotificationService {
   }
 
   private async ensureWorkspaceContentExists(workspaceId: string) {
-    const workspace = await this.models.workspace.get(workspaceId);
-    if (!workspace || workspace.name) {
-      return;
-    }
-    const content = await this.docReader.getWorkspaceContent(workspaceId);
-    if (!content?.name) {
-      return;
-    }
-    await this.models.workspace.update(workspaceId, {
-      name: content.name,
-      avatarKey: content.avatarKey,
-    });
+    await this.docReader.getWorkspaceContent(workspaceId);
   }
 
   async markAsRead(userId: string, notificationId: string) {
