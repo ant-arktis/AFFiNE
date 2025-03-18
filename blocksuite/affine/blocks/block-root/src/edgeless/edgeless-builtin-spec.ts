@@ -9,6 +9,7 @@ import type { ExtensionType } from '@blocksuite/store';
 
 import { EdgelessRootBlockSpec } from './edgeless-root-spec.js';
 import { ConnectorFilter } from './element-transform/connector-filter.js';
+import { FrameHighlightManager } from './element-transform/frame-highlight-manager.js';
 import { MindMapDragExtension } from './element-transform/mind-map-drag.js';
 import { SnapExtension } from './element-transform/snap-manager.js';
 import { MindMapIndicatorOverlay } from './element-transform/utils/indicator-overlay.js';
@@ -48,6 +49,7 @@ export const EdgelessEditExtensions: ExtensionType[] = [
   SnapExtension,
   CanvasEventHandler,
   MindMapDragExtension,
+  FrameHighlightManager,
 ];
 
 export const EdgelessBuiltInManager: ExtensionType[] = [
