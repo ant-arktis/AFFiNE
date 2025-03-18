@@ -121,7 +121,7 @@ export class CopilotJobModel extends BaseModel {
     };
   }
 
-  async getConfig<
+  async getPayload<
     C extends ZodType<any>,
     O = C extends ZodType<infer T> ? T : never,
   >(jobId: string, schema: C): Promise<O> {
