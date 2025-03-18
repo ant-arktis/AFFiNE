@@ -4,7 +4,7 @@ import { DocStorageModule } from '../doc';
 import { PermissionModule } from '../permission';
 import { StorageModule } from '../storage';
 import { NotificationJob } from './job';
-import { MailsService } from './mails';
+import { Mailer } from './mailer';
 import { NotificationResolver, UserNotificationResolver } from './resolver';
 import { NotificationService } from './service';
 
@@ -15,9 +15,9 @@ import { NotificationService } from './service';
     NotificationResolver,
     NotificationService,
     NotificationJob,
-    MailsService,
+    Mailer,
   ],
-  exports: [NotificationService],
+  exports: [NotificationService, Mailer],
 })
 export class NotificationModule {}
-export { MailsService };
+export { Mailer } from './mailer';

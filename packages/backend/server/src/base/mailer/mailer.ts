@@ -11,7 +11,11 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { Config } from '../config';
 import { metrics } from '../metrics';
 
-export type SendOptions = SendMailOptions;
+export type SendOptions = Omit<SendMailOptions, 'to' | 'subject' | 'html'> & {
+  to: string;
+  subject: string;
+  html: string;
+};
 
 @Injectable()
 export class Mailer implements OnModuleInit {
@@ -21,16 +25,18 @@ export class Mailer implements OnModuleInit {
   constructor(private readonly config: Config) {}
 
   onModuleInit() {
-    this.createSMTP();
+    this.createSMTP(this.config.mailer);
   }
 
-  createSMTP() {
-    if (this.config.mailer.host) {
-      this.smtp = createTransport(this.config.mailer);
+  createSMTP(config: SMTPTransport.Options) {
+    if (config.host) {
+      this.smtp = createTransport(config);
     } else if (this.config.node.dev) {
       createTestAccount((err, account) => {
         if (!err) {
           this.smtp = createTransport({
+            from: 'noreply@toeverything.info',
+            ...this.config.mailer,
             ...account.smtp,
             auth: {
               user: account.user,
@@ -45,21 +51,38 @@ export class Mailer implements OnModuleInit {
     return null;
   }
 
-  async send(options: SendOptions) {
+  async send(name: string, options: SendOptions) {
     if (!this.smtp) {
       this.logger.warn(`Mailer SMTP transport is not configured to send mail.`);
       return null;
     }
 
-    const result = await this.smtp.sendMail({
-      from: this.config.mailer.from,
-      ...options,
-    });
+    metrics.mail.counter('send_total').add(1, { name });
+    try {
+      const result = await this.smtp.sendMail({
+        from: this.config.mailer.from,
+        ...options,
+      });
 
-    if (this.usingTestAccount && result.accepted.length > 0) {
-      this.logger.debug(`Mail preview url: ${getTestMessageUrl(result)}`);
+      if (result.rejected.length > 0) {
+        metrics.mail.counter('rejected_total').add(1, { name });
+        this.logger.error(
+          `Mail [${name}] rejected by ${result.rejected}, response: ${result.response}`
+        );
+      }
+
+      metrics.mail.counter('accepted_total').add(1, { name });
+      this.logger.log(`Mail [${name}] sent successfully to ${options.to}.`);
+      if (this.usingTestAccount) {
+        this.logger.debug(
+          `  ⚙️ Mail preview url: ${getTestMessageUrl(result)}`
+        );
+      }
+
+      return true;
+    } catch (e) {
+      this.logger.error(`Mail [${name}] failed to send: ${e}`);
+      return false;
     }
-
-    return result;
   }
 }

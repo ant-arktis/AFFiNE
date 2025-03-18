@@ -26,7 +26,7 @@ export * from './guard';
 export { CryptoHelper, URLHelper } from './helpers';
 export * from './job';
 export { AFFiNELogger } from './logger';
-export { Mailer } from './mailer';
+export { Mailer, type SendOptions } from './mailer';
 export { CallMetric, metrics } from './metrics';
 export { Lock, Locker, Mutex, RequestMutex } from './mutex';
 export * from './nestjs';

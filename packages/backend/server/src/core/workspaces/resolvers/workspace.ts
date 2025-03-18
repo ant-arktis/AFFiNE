@@ -493,7 +493,12 @@ export class WorkspaceResolver {
 
       if (sendInviteMail) {
         try {
-          await this.workspaceService.sendInviteEmail(role.id);
+          await this.workspaceService.sendInviteEmail({
+            workspaceId,
+            inviteeEmail: email,
+            inviterUserId: user.id,
+            inviteId: role.id,
+          });
         } catch (e) {
           await this.models.workspaceUser.delete(workspaceId, user.id);
 

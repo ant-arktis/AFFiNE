@@ -2,7 +2,7 @@ import './config';
 
 import { Global, Module } from '@nestjs/common';
 
-import { Mailer } from './mailer';
+import { Mailer, type SendOptions } from './mailer';
 
 @Global()
 @Module({
@@ -11,4 +11,4 @@ import { Mailer } from './mailer';
 })
 export class MailerModule {}
 
-export { Mailer };
+export { Mailer, type SendOptions };
