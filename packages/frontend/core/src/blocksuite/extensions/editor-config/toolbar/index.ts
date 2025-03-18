@@ -425,7 +425,6 @@ function createExternalLinkableToolbarConfig(
               toast(ctx.host, 'Copied link to clipboard');
 
               ctx.track('CopiedLink', {
-                module: 'toolbar',
                 category: matchModels(model, [BookmarkBlockModel])
                   ? 'bookmark'
                   : 'link',
@@ -462,7 +461,6 @@ function createExternalLinkableToolbarConfig(
               );
 
               ctx.track('OpenedAliasPopup', {
-                module: 'toolbar',
                 category: matchModels(model, [BookmarkBlockModel])
                   ? 'bookmark'
                   : 'link',
@@ -600,9 +598,6 @@ const embedLinkedDocToolbarConfig = {
             toast(ctx.host, 'Copied link to clipboard');
 
             ctx.track('CopiedLink', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'card view',
               control: 'copy link',
@@ -648,9 +643,6 @@ const embedLinkedDocToolbarConfig = {
             );
 
             ctx.track('OpenedAliasPopup', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'embed view',
               control: 'edit',
@@ -689,9 +681,6 @@ const embedSyncedDocToolbarConfig = {
             toast(ctx.host, 'Copied link to clipboard');
 
             ctx.track('CopiedLink', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'embed view',
               control: 'copy link',
@@ -730,9 +719,6 @@ const embedSyncedDocToolbarConfig = {
             );
 
             ctx.track('OpenedAliasPopup', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'embed view',
               control: 'edit',
@@ -846,9 +832,6 @@ const inlineReferenceToolbarConfig = {
             toast(ctx.host, 'Copied link to clipboard');
 
             ctx.track('CopiedLink', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'inline view',
               control: 'copy link',
@@ -882,9 +865,6 @@ const inlineReferenceToolbarConfig = {
             abortController.signal.onabort = () => popover.remove();
 
             ctx.track('OpenedAliasPopup', {
-              segment: 'doc',
-              page: 'doc editor',
-              module: 'toolbar',
               category: 'linked doc',
               type: 'inline view',
               control: 'edit',
@@ -993,8 +973,18 @@ export const createCustomToolbarExtension = (
     }),
 
     ToolbarModuleExtension({
+      id: BlockFlavourIdentifier('custom:affine:surface:embed-figma'),
+      config: createExternalLinkableToolbarConfig(BookmarkBlockComponent),
+    }),
+
+    ToolbarModuleExtension({
       id: BlockFlavourIdentifier('custom:affine:embed-github'),
       config: createExternalLinkableToolbarConfig(EmbedGithubBlockComponent),
+    }),
+
+    ToolbarModuleExtension({
+      id: BlockFlavourIdentifier('custom:affine:surface:embed-github'),
+      config: createExternalLinkableToolbarConfig(BookmarkBlockComponent),
     }),
 
     ToolbarModuleExtension({
@@ -1003,8 +993,18 @@ export const createCustomToolbarExtension = (
     }),
 
     ToolbarModuleExtension({
+      id: BlockFlavourIdentifier('custom:affine:surface:embed-loom'),
+      config: createExternalLinkableToolbarConfig(BookmarkBlockComponent),
+    }),
+
+    ToolbarModuleExtension({
       id: BlockFlavourIdentifier('custom:affine:embed-youtube'),
       config: createExternalLinkableToolbarConfig(EmbedYoutubeBlockComponent),
+    }),
+
+    ToolbarModuleExtension({
+      id: BlockFlavourIdentifier('custom:affine:surface:embed-youtube'),
+      config: createExternalLinkableToolbarConfig(BookmarkBlockComponent),
     }),
 
     ToolbarModuleExtension({
