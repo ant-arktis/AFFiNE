@@ -1822,6 +1822,8 @@
   "com.affine.integration.readwise.setting.start-import-name": "Start Importing",
   "com.affine.integration.readwise.setting.start-import-desc": "Using the settings above",
   "com.affine.integration.readwise.setting.start-import-button": "Import",
+  "com.affine.integration.readwise.setting.tags-label": "Apply tags to highlight imports",
+  "com.affine.integration.readwise.setting.tags-placeholder": "Click to add tags",
   "com.affine.integration.readwise-prop.author": "Author",
   "com.affine.integration.readwise-prop.source": "Source",
   "com.affine.integration.readwise-prop.created": "Created",

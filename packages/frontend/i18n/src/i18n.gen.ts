@@ -7318,6 +7318,14 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.integration.readwise.setting.start-import-button"](): string;
     /**
+      * `Apply tags to highlight imports`
+      */
+    ["com.affine.integration.readwise.setting.tags-label"](): string;
+    /**
+      * `Click to add tags`
+      */
+    ["com.affine.integration.readwise.setting.tags-placeholder"](): string;
+    /**
       * `Author`
       */
     ["com.affine.integration.readwise-prop.author"](): string;

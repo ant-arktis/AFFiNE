@@ -87,6 +87,10 @@ export interface ReadwiseConfig {
    * The update strategy
    */
   updateStrategy?: 'override' | 'append';
+  /**
+   * Tag id list to be used when creating highlights
+   */
+  tags?: string[];
 }
 // ===============================
 // Zotero

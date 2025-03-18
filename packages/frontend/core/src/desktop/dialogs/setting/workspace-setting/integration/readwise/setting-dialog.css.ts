@@ -79,3 +79,28 @@ export const updateStrategyGroup = style({
 export const updateStrategyGroupContent = style({
   overflow: 'hidden',
 });
+
+export const tagsLabel = style({
+  fontSize: 14,
+  fontWeight: 500,
+  lineHeight: '22px',
+  color: cssVarV2.text.primary,
+  marginBottom: 2,
+});
+
+export const tagsEditor = style({
+  padding: '6px 8px',
+  borderRadius: 4,
+  border: `1px solid ${cssVarV2.layer.insideBorder.border}`,
+  fontSize: 14,
+});
+export const tagsPlaceholder = style({
+  fontSize: 14,
+  lineHeight: '22px',
+  color: cssVarV2.text.placeholder,
+});
+export const tagsMenu = style({
+  left: -1,
+  top: 'calc(-1px + var(--radix-popper-anchor-height) * -1)',
+  width: 'calc(2px + var(--radix-popper-anchor-width))',
+});

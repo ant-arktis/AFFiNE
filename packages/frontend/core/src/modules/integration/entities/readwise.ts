@@ -86,6 +86,7 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
       const updateStrategy = this.readwiseStore.getSetting('updateStrategy');
       const syncNewHighlights =
         this.readwiseStore.getSetting('syncNewHighlights');
+      const tags = this.readwiseStore.getSetting('tags');
       const chunks = chunk(highlights, 2);
       const total = highlights.length;
       let finished = 0;
@@ -120,6 +121,7 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
                 updateStrategy,
                 integrationId,
                 userId,
+                tags,
               });
             }
             finished++;
@@ -144,15 +146,17 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
       integrationId: string;
       userId: string;
       updateStrategy?: ReadwiseConfig['updateStrategy'];
+      tags?: string[];
     }
   ) {
-    const { updateStrategy, integrationId } = options;
+    const { updateStrategy, integrationId, tags } = options;
     const { text, ...highlightWithoutText } = highlight;
 
     const writtenDocId = await this.writer.writeDoc({
       content: text,
       title: book.title,
       docId,
+      tags,
       comment: highlight.note,
       updateStrategy: updateStrategy ?? 'append',
     });
