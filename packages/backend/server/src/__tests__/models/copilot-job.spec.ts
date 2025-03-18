@@ -82,6 +82,10 @@ test('should update job', async t => {
     createdBy: user.id,
     type: CopilotJobType.Transcription,
   });
+
+  const hasJob = await t.context.copilotJob.has(workspace.id, 'blob-id');
+  t.true(hasJob);
+
   const job = await t.context.copilotJob.get(jobId);
 
   const data = {
@@ -91,4 +95,39 @@ test('should update job', async t => {
   await t.context.copilotJob.update(jobId, data);
   const job1 = await t.context.copilotJob.get(jobId);
   t.deepEqual(job1, { ...job, ...data });
+});
+
+test('should claim job', async t => {
+  const user = await t.context.user.create({
+    email: 'test@affine.pro',
+  });
+  const workspace = await t.context.workspace.create(user.id);
+  const { id: jobId } = await t.context.copilotJob.create({
+    workspaceId: workspace.id,
+    blobId: 'blob-id',
+    createdBy: user.id,
+    type: CopilotJobType.Transcription,
+  });
+
+  const status = await t.context.copilotJob.claim(jobId, user.id);
+  t.is(status, AiJobStatus.pending, 'should not claim non-finished job');
+
+  await t.context.copilotJob.update(jobId, { status: AiJobStatus.finished });
+
+  const status1 = await t.context.copilotJob.claim(jobId, 'non-exist-user');
+  t.is(
+    status1,
+    AiJobStatus.finished,
+    'should not claim job created by other user'
+  );
+
+  const status2 = await t.context.copilotJob.claim(jobId, user.id);
+  t.is(status2, AiJobStatus.claimed, 'should claim finished job');
+
+  const status3 = await t.context.copilotJob.get(jobId);
+  t.is(
+    status3?.status,
+    AiJobStatus.claimed,
+    'should update job status to claimed'
+  );
 });

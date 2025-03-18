@@ -64,7 +64,7 @@ export class CopilotJobModel extends BaseModel {
       job.createdBy === userId &&
       job.status === AiJobStatus.finished
     ) {
-      await this.update(jobId, { status: AiJobStatus.finished });
+      await this.update(jobId, { status: AiJobStatus.claimed });
     }
 
     const ret = await this.db.aiJobs.findFirst({
