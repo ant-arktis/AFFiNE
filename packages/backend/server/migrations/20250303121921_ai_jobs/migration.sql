@@ -9,7 +9,7 @@ CREATE TABLE "ai_jobs" (
     "created_by" VARCHAR,
     "type" VARCHAR NOT NULL,
     "status" "AiJobStatus" NOT NULL DEFAULT 'pending',
-    "config" JSON NOT NULL,
+    "payload" JSON NOT NULL,
     "started_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "finished_at" TIMESTAMPTZ(3),
 

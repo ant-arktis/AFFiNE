@@ -12,5 +12,5 @@ export interface CopilotJob {
   createdBy?: string;
   type: CopilotJobType;
   status?: AiJobStatus;
-  config?: JsonValue;
+  payload?: JsonValue;
 }

@@ -6,8 +6,8 @@ import type { ZodType } from 'zod';
 import { BaseModel } from './base';
 import { CopilotJob, CopilotJobType } from './common/copilot';
 
-type CreateCopilotJobInput = Omit<CopilotJob, 'id' | 'status' | 'config'>;
-type UpdateCopilotJobInput = Pick<CopilotJob, 'status' | 'config'>;
+type CreateCopilotJobInput = Omit<CopilotJob, 'id' | 'status' | 'payload'>;
+type UpdateCopilotJobInput = Pick<CopilotJob, 'status' | 'payload'>;
 
 /**
  * Copilot Job Model
@@ -22,7 +22,7 @@ export class CopilotJobModel extends BaseModel {
         createdBy: job.createdBy,
         type: job.type,
         status: AiJobStatus.pending,
-        config: {},
+        payload: {},
       },
       select: {
         id: true,
@@ -49,7 +49,7 @@ export class CopilotJobModel extends BaseModel {
       },
       data: {
         status: data.status || undefined,
-        config: data.config || undefined,
+        payload: data.payload || undefined,
       },
     });
     return ret.count > 0;
@@ -117,7 +117,7 @@ export class CopilotJobModel extends BaseModel {
       createdBy: row.createdBy || undefined,
       type: row.type as CopilotJobType,
       status: row.status,
-      config: row.config,
+      payload: row.payload,
     };
   }
 
@@ -130,11 +130,11 @@ export class CopilotJobModel extends BaseModel {
         id: jobId,
       },
       select: {
-        config: true,
+        payload: true,
       },
     });
 
-    const ret = schema.safeParse(row?.config);
+    const ret = schema.safeParse(row?.payload);
     return ret.success ? ret.data : ({} as O);
   }
 }

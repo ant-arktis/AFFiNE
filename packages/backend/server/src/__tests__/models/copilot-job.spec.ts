@@ -60,7 +60,7 @@ test('should create a copilot job', async t => {
       ...data,
       id: job.id,
       status: AiJobStatus.pending,
-      config: {},
+      payload: {},
     },
     job1
   );
@@ -90,7 +90,7 @@ test('should update job', async t => {
 
   const data = {
     status: AiJobStatus.running,
-    config: { foo: 'bar' },
+    payload: { foo: 'bar' },
   };
   await t.context.copilotJob.update(jobId, data);
   const job1 = await t.context.copilotJob.get(jobId);

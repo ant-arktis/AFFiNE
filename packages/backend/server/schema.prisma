@@ -489,9 +489,11 @@ model AiJobs {
   workspaceId String      @map("workspace_id") @db.VarChar
   blobId      String      @map("blob_id") @db.VarChar
   createdBy   String?     @map("created_by") @db.VarChar
+  // job type, like "transcription"
   type        String      @db.VarChar
   status      AiJobStatus @default(pending)
-  config      Json        @db.Json
+  // job result
+  payload     Json        @db.Json
 
   startedAt  DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
   finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
@@ -738,12 +740,12 @@ model Notification {
 }
 
 model Settings {
-  userId       String     @id @map("user_id") @db.VarChar
-  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  payload      Json       @db.JsonB
+  userId    String   @id @map("user_id") @db.VarChar
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  payload   Json     @db.JsonB
 
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("settings")
 }
