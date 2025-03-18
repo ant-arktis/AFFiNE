@@ -1,6 +1,5 @@
 import { insertEdgelessTextCommand } from '@blocksuite/affine-block-edgeless-text';
 import {
-  EdgelessFrameManagerIdentifier,
   type FrameOverlay,
   isFrameBlock,
 } from '@blocksuite/affine-block-frame';
@@ -12,7 +11,6 @@ import {
 import { addText, mountTextElementEditor } from '@blocksuite/affine-gfx-text';
 import type {
   EdgelessTextBlockModel,
-  FrameBlockModel,
   NoteBlockModel,
 } from '@blocksuite/affine-model';
 import {
@@ -35,11 +33,10 @@ import type { PointerEventState } from '@blocksuite/block-std';
 import {
   BaseTool,
   getTopElements,
-  type GfxBlockElementModel,
   type GfxModel,
-  type GfxPrimitiveElementModel,
   isGfxGroupCompatibleModel,
   type PointTestOptions,
+  TransformManagerIdentifier,
 } from '@blocksuite/block-std/gfx';
 import { DisposableGroup } from '@blocksuite/global/disposable';
 import type { IVec } from '@blocksuite/global/gfx';
@@ -53,7 +50,6 @@ import type { EdgelessRootBlockComponent } from '../edgeless-root-block.js';
 import { prepareCloneData } from '../utils/clone-utils.js';
 import { calPanDelta } from '../utils/panning-utils.js';
 import { isCanvasElement, isEdgelessTextBlock } from '../utils/query.js';
-import type { SnapManager } from '../utils/snap-manager.js';
 import {
   mountConnectorLabelEditor,
   mountFrameTitleEditor,
@@ -70,8 +66,6 @@ export class DefaultTool extends BaseTool {
 
   private _accumulateDelta: IVec = [0, 0];
 
-  private _alignBound = new Bound();
-
   private _autoPanTimer: number | null = null;
 
   private readonly _clearDisposable = () => {
@@ -84,8 +78,6 @@ export class DefaultTool extends BaseTool {
   private readonly _clearSelectingState = () => {
     this._stopAutoPanning();
     this._clearDisposable();
-
-    this._wheeling = false;
   };
 
   private _disposables: DisposableGroup | null = null;
@@ -98,11 +90,12 @@ export class DefaultTool extends BaseTool {
 
   private _exts: DefaultToolExt[] = [];
 
-  private _hoveredFrame: FrameBlockModel | null = null;
-
   // Do not select the text, when click again after activating the note.
   private _isDoubleClickedOnMask = false;
 
+  /**
+   * 可能是用于锁定拖拽开始前的改动，保证拖拽开始后的改动不会和之前的改动混淆？
+   */
   private _lock = false;
 
   private readonly _panViewport = (delta: IVec) => {
@@ -110,15 +103,6 @@ export class DefaultTool extends BaseTool {
     this._accumulateDelta[1] += delta[1];
     this.gfx.viewport.applyDeltaCenter(delta[0], delta[1]);
   };
-
-  private readonly _pendingUpdates = new Map<
-    GfxBlockElementModel | GfxPrimitiveElementModel,
-    Partial<GfxBlockElementModel>
-  >();
-
-  private _rafId: number | null = null;
-
-  private _selectedBounds: Bound[] = [];
 
   // For moving the connector label
   private _selectedConnector: ConnectorElementModel | null = null;
@@ -219,8 +203,6 @@ export class DefaultTool extends BaseTool {
     });
   };
 
-  private _wheeling = false;
-
   dragType = DefaultModeDragType.None;
 
   enableHover = true;
@@ -229,10 +211,6 @@ export class DefaultTool extends BaseTool {
     const block = this.std.view.getBlock(this.doc.root!.id);
 
     return (block as EdgelessRootBlockComponent) ?? null;
-  }
-
-  private get _frameMgr() {
-    return this.std.get(EdgelessFrameManagerIdentifier);
   }
 
   private get _supportedExts() {
@@ -263,12 +241,12 @@ export class DefaultTool extends BaseTool {
     return this.gfx.selection;
   }
 
-  private get frameOverlay() {
-    return this.std.get(OverlayIdentifier('frame')) as FrameOverlay;
+  get elementTransformMgr() {
+    return this.std.getOptional(TransformManagerIdentifier);
   }
 
-  get snapOverlay() {
-    return this.std.get(OverlayIdentifier('snap-manager')) as SnapManager;
+  private get frameOverlay() {
+    return this.std.get(OverlayIdentifier('frame')) as FrameOverlay;
   }
 
   private _addEmptyParagraphBlock(
@@ -285,8 +263,6 @@ export class DefaultTool extends BaseTool {
   }
 
   private async _cloneContent() {
-    this._lock = true;
-
     if (!this._edgeless) return;
 
     const clipboardController = this._edgeless?.clipboardController;
@@ -374,91 +350,6 @@ export class DefaultTool extends BaseTool {
     }
   }
 
-  private _filterConnectedConnector() {
-    this._toBeMoved = this._toBeMoved.filter(ele => {
-      // eslint-disable-next-line sonarjs/no-collapsible-if
-      if (
-        ele instanceof ConnectorElementModel &&
-        ele.source?.id &&
-        ele.target?.id
-      ) {
-        if (
-          this._toBeMoved.some(e => e.id === ele.source.id) &&
-          this._toBeMoved.some(e => e.id === ele.target.id)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }
-
-  private _isDraggable(element: GfxModel) {
-    return !(
-      element instanceof ConnectorElementModel &&
-      !ConnectorUtils.isConnectorAndBindingsAllSelected(
-        element,
-        this._toBeMoved
-      )
-    );
-  }
-
-  private _moveContent(
-    [dx, dy]: IVec,
-    alignBound: Bound,
-    shifted?: boolean,
-    shouldClone?: boolean
-  ) {
-    alignBound.x += dx;
-    alignBound.y += dy;
-
-    const alignRst = this.snapOverlay.align(alignBound);
-    const delta = [dx + alignRst.dx, dy + alignRst.dy];
-
-    if (shifted) {
-      const angle = Math.abs(Math.atan2(delta[1], delta[0]));
-      const direction =
-        angle < Math.PI / 4 || angle > 3 * (Math.PI / 4) ? 'x' : 'y';
-      delta[direction === 'x' ? 1 : 0] = 0;
-    }
-
-    this._toBeMoved.forEach((element, index) => {
-      const isGraphicElement = isCanvasElement(element);
-
-      if (isGraphicElement && !this._isDraggable(element)) return;
-
-      let bound = this._selectedBounds[index];
-      if (shouldClone) bound = bound.clone();
-
-      bound.x += delta[0];
-      bound.y += delta[1];
-
-      if (isGraphicElement) {
-        if (!this._lock) {
-          this._lock = true;
-          this.doc.captureSync();
-        }
-
-        if (element instanceof ConnectorElementModel) {
-          element.moveTo(bound);
-        }
-      }
-
-      this._scheduleUpdate(element, {
-        xywh: bound.serialize(),
-      });
-    });
-
-    this._hoveredFrame = this._frameMgr.getFrameFromPoint(
-      this.dragLastPos,
-      this._toBeMoved.filter(ele => isFrameBlock(ele))
-    );
-
-    this._hoveredFrame && !this._hoveredFrame.isLocked()
-      ? this.frameOverlay.highlight(this._hoveredFrame)
-      : this.frameOverlay.clear();
-  }
-
   private _moveLabel(delta: IVec) {
     const connector = this._selectedConnector;
     let bounds = this._selectedConnectorLabelBounds;
@@ -535,47 +426,11 @@ export class DefaultTool extends BaseTool {
     return tryGetLockedAncestor(result);
   }
 
-  private _scheduleUpdate(
-    element: GfxBlockElementModel | GfxPrimitiveElementModel,
-    updates: Partial<GfxBlockElementModel>
-  ) {
-    this._pendingUpdates.set(element, updates);
-
-    if (this._rafId !== null) return;
-
-    this._rafId = requestAnimationFrame(() => {
-      this._pendingUpdates.forEach((updates, element) => {
-        this.gfx.updateElement(element, updates);
-      });
-      this._pendingUpdates.clear();
-      this._rafId = null;
-    });
-  }
-
   private initializeDragState(
     dragType: DefaultModeDragType,
     event: PointerEventState
   ) {
     this.dragType = dragType;
-
-    const mindmaps: MindmapElementModel[] = this._toBeMoved.reduce(
-      (pre, elem) => {
-        if (
-          elem.group instanceof MindmapElementModel &&
-          !pre.includes(elem.group)
-        ) {
-          pre.push(elem.group);
-        }
-
-        return pre;
-      },
-      [] as MindmapElementModel[]
-    );
-
-    this._alignBound = this.snapOverlay.setMovingElements(this._toBeMoved, [
-      ...mindmaps,
-      ...mindmaps.flatMap(m => m.childElements),
-    ]);
 
     this._clearDisposable();
     this._disposables = new DisposableGroup();
@@ -587,9 +442,6 @@ export class DefaultTool extends BaseTool {
     };
 
     this._extHandlers = this._supportedExts.map(ext => ext.initDrag(ctx));
-    this._selectedBounds = this._toBeMoved.map(element =>
-      Bound.deserialize(element.xywh)
-    );
 
     // If the drag type is selecting, set up the dragging area disposable group
     // If the viewport updates when dragging, should update the dragging area and selection
@@ -608,37 +460,16 @@ export class DefaultTool extends BaseTool {
       return;
     }
 
-    if (this.dragType === DefaultModeDragType.ContentMoving) {
-      this._disposables.add(
-        this.gfx.viewport.viewportMoved.subscribe(delta => {
-          if (
-            this.dragType === DefaultModeDragType.ContentMoving &&
-            this.controller.dragging$.peek() &&
-            !this._autoPanTimer
-          ) {
-            if (
-              this._toBeMoved.every(ele => {
-                return !this._isDraggable(ele);
-              })
-            ) {
-              return;
-            }
-
-            if (!this._wheeling) {
-              this._wheeling = true;
-              this._selectedBounds = this._toBeMoved.map(element =>
-                Bound.deserialize(element.xywh)
-              );
-            }
-
-            this._alignBound = this.snapOverlay.setMovingElements(
-              this._toBeMoved
-            );
-
-            this._moveContent(delta, this._alignBound);
-          }
-        })
-      );
+    if (
+      this.dragType === DefaultModeDragType.AltCloning ||
+      this.dragType === DefaultModeDragType.ContentMoving
+    ) {
+      if (this.elementTransformMgr) {
+        this.elementTransformMgr.initializeDrag({
+          movingElements: this._toBeMoved,
+          event: event.raw,
+        });
+      }
       return;
     }
   }
@@ -835,36 +666,6 @@ export class DefaultTool extends BaseTool {
   override dragEnd(e: PointerEventState) {
     this._extHandlers.forEach(handler => handler.dragEnd?.(e));
 
-    this._toBeMoved.forEach(el => {
-      this.doc.transact(() => {
-        el.pop('xywh');
-      });
-
-      if (el instanceof ConnectorElementModel) {
-        el.pop('labelXYWH');
-      }
-    });
-
-    {
-      const frameManager = this._frameMgr;
-      const toBeMovedTopElements = getTopElements(
-        this._toBeMoved.map(el =>
-          el.group instanceof MindmapElementModel ? el.group : el
-        )
-      );
-      if (this._hoveredFrame) {
-        frameManager.addElementsToFrame(
-          this._hoveredFrame,
-          toBeMovedTopElements
-        );
-      } else {
-        // only apply to root nodes of trees
-        toBeMovedTopElements.forEach(element =>
-          frameManager.removeFromParentFrame(element)
-        );
-      }
-    }
-
     if (this._lock) {
       this.doc.captureSync();
       this._lock = false;
@@ -872,8 +673,6 @@ export class DefaultTool extends BaseTool {
 
     if (this.edgelessSelectionManager.editing) return;
 
-    this._selectedBounds = [];
-    this.snapOverlay.clear();
     this.frameOverlay.clear();
     this._toBeMoved = [];
     this._selectedConnector = null;
@@ -899,25 +698,6 @@ export class DefaultTool extends BaseTool {
       }
       case DefaultModeDragType.AltCloning:
       case DefaultModeDragType.ContentMoving: {
-        if (
-          this._toBeMoved.length &&
-          this._toBeMoved.every(ele => {
-            return !this._isDraggable(ele);
-          })
-        ) {
-          return;
-        }
-
-        if (this._wheeling) {
-          this._wheeling = false;
-        }
-
-        const dx = this.dragLastPos[0] - this.dragStartPos[0];
-        const dy = this.dragLastPos[1] - this.dragStartPos[1];
-        const alignBound = this._alignBound.clone();
-        const shifted = e.keys.shift || this.gfx.keyboard.shiftKey$.peek();
-
-        this._moveContent([dx, dy], alignBound, shifted, true);
         this._extHandlers.forEach(handler => handler.dragMove?.(e));
         break;
       }
@@ -956,28 +736,17 @@ export class DefaultTool extends BaseTool {
     this._toBeMoved = Array.from(toBeMoved);
 
     // If alt key is pressed and content is moving, clone the content
-    if (e.keys.alt && dragType === DefaultModeDragType.ContentMoving) {
-      dragType = DefaultModeDragType.AltCloning;
-      await this._cloneContent();
-    }
-    this._filterConnectedConnector();
+    if (dragType === DefaultModeDragType.ContentMoving) {
+      this._lock = true;
 
-    // Connector needs to be updated first
-    this._toBeMoved.sort((a, _) =>
-      a instanceof ConnectorElementModel ? -1 : 1
-    );
+      if (e.keys.alt) {
+        dragType = DefaultModeDragType.AltCloning;
+        await this._cloneContent();
+      }
+    }
 
     // Set up drag state
     this.initializeDragState(dragType, e);
-
-    // stash the state
-    this._toBeMoved.forEach(ele => {
-      ele.stash('xywh');
-
-      if (ele instanceof ConnectorElementModel) {
-        ele.stash('labelXYWH');
-      }
-    });
 
     this._extHandlers.forEach(handler => handler.dragStart?.(e));
   }

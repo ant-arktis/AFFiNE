@@ -1,9 +1,12 @@
 import { PresentTool } from '@blocksuite/affine-block-frame';
 import { ConnectionOverlay } from '@blocksuite/affine-block-surface';
 import { TextTool } from '@blocksuite/affine-gfx-text';
+import { ElementTransformManager } from '@blocksuite/block-std/gfx';
 import type { ExtensionType } from '@blocksuite/store';
 
 import { EdgelessRootBlockSpec } from './edgeless-root-spec.js';
+import { ConnectorFilter } from './element-transform/connector-filter.js';
+import { SnapExtension } from './element-transform/snap-manager.js';
 import { BrushTool } from './gfx-tool/brush-tool.js';
 import { ConnectorTool } from './gfx-tool/connector-tool.js';
 import { DefaultTool } from './gfx-tool/default-tool.js';
@@ -17,7 +20,7 @@ import { PanTool } from './gfx-tool/pan-tool.js';
 import { ShapeTool } from './gfx-tool/shape-tool.js';
 import { TemplateTool } from './gfx-tool/template-tool.js';
 import { EditPropsMiddlewareBuilder } from './middlewares/base.js';
-import { SnapManager } from './utils/snap-manager.js';
+import { SnapOverlay } from './utils/snap-manager.js';
 
 export const EdgelessToolExtension: ExtensionType[] = [
   DefaultTool,
@@ -35,10 +38,16 @@ export const EdgelessToolExtension: ExtensionType[] = [
   PresentTool,
 ];
 
+export const EdgelessEditExtensions: ExtensionType[] = [
+  ElementTransformManager,
+  ConnectorFilter,
+  SnapExtension,
+];
+
 export const EdgelessBuiltInManager: ExtensionType[] = [
   ConnectionOverlay,
   MindMapIndicatorOverlay,
-  SnapManager,
+  SnapOverlay,
   EditPropsMiddlewareBuilder,
 ];
 
@@ -46,4 +55,5 @@ export const EdgelessBuiltInSpecs: ExtensionType[] = [
   EdgelessRootBlockSpec,
   EdgelessToolExtension,
   EdgelessBuiltInManager,
+  EdgelessEditExtensions,
 ].flat();

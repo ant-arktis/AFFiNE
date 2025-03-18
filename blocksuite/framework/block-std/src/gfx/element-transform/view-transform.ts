@@ -4,7 +4,7 @@ import type { GfxBlockComponent } from '../../view';
 import type { GfxModel } from '../model/model';
 import type { GfxElementModelView } from '../view/view';
 
-export type DragMoveContext = {
+export type DragStartContext = {
   /**
    * The elements that are being dragged
    */
@@ -18,7 +18,9 @@ export type DragMoveContext = {
    * The bound of element when drag starts
    */
   currentBound: Bound;
+};
 
+export type DragMoveContext = DragStartContext & {
   /**
    * The delta x of current drag position compared to the start position in model coordinate.
    */
@@ -30,8 +32,12 @@ export type DragMoveContext = {
   dy: number;
 };
 
+export type DragEndContext = DragMoveContext;
+
 export type GfxViewTransformInterface = {
-  onDragMoveDelta: (context: DragMoveContext) => void;
+  onDragStart: (context: DragStartContext) => void;
+  onDragMove: (context: DragMoveContext) => void;
+  onDragEnd: (context: DragEndContext) => void;
   onRotate: (context: {}) => void;
   onResize: (context: {}) => void;
 };

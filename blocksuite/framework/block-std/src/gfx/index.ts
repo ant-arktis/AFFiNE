@@ -12,6 +12,24 @@ export {
 } from '../utils/tree.js';
 export { GfxController } from './controller.js';
 export type { CursorType, StandardCursor } from './cursor.js';
+export type {
+  DragExtensionInitializeContext,
+  DragInitializationOption,
+  ExtensionDragEndContext,
+  ExtensionDragMoveContext,
+  ExtensionDragStartContext,
+} from './element-transform/drag.js';
+export {
+  ElementTransformManager,
+  TransformExtension,
+  TransformExtensionIdentifier,
+  TransformManagerIdentifier,
+} from './element-transform/transform-manager.js';
+export type {
+  DragEndContext,
+  DragMoveContext,
+  DragStartContext,
+} from './element-transform/view-transform.js';
 export { GfxExtension, GfxExtensionIdentifier } from './extension.js';
 export { GridManager } from './grid.js';
 export { GfxControllerIdentifier } from './identifiers.js';

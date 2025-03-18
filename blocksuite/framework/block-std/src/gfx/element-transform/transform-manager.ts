@@ -1,19 +1,26 @@
-import { createIdentifier } from '@blocksuite/global/di';
+import {
+  type Container,
+  createIdentifier,
+  type ServiceIdentifier,
+} from '@blocksuite/global/di';
+import { BlockSuiteError, ErrorCode } from '@blocksuite/global/exceptions';
 import { Bound, Point } from '@blocksuite/global/gfx';
 import { DisposableGroup } from '@blocksuite/global/slot';
 import { Extension } from '@blocksuite/store';
 
+import { GfxExtension, GfxExtensionIdentifier } from '../extension.js';
+import { type GfxController, GfxControllerIdentifier } from '../index.js';
 import type {
   DragExtensionInitializeContext,
   DragInitializationOption,
   ExtensionDragEndContext,
   ExtensionDragMoveContext,
   ExtensionDragStartContext,
-} from './element-transform/drag';
-import { GfxExtension } from './extension';
+} from './drag.js';
 
-export const TransformExtensionIdentifier =
-  createIdentifier<TransformExtension>('element-transform-manager');
+export const TransformManagerIdentifier = GfxExtensionIdentifier(
+  'element-transform-manager'
+) as ServiceIdentifier<ElementTransformManager>;
 
 export class ElementTransformManager extends GfxExtension {
   static override key = 'element-transform-manager';
@@ -26,6 +33,10 @@ export class ElementTransformManager extends GfxExtension {
 
   override unmounted(): void {
     this._disposable.dispose();
+  }
+
+  get keyboard() {
+    return this.gfx.keyboard;
   }
 
   private _safeExecute(fn: () => void, errorMessage: string) {
@@ -49,11 +60,13 @@ export class ElementTransformManager extends GfxExtension {
       },
     };
     const extension = this.std.provider.getAll(TransformExtensionIdentifier);
-    const activeExtensionHandlers = extension.values().map(ext => {
-      return ext.onDragInitialize(context);
-    });
+    const activeExtensionHandlers = Array.from(
+      extension.values().map(ext => {
+        return ext.onDragInitialize(context);
+      })
+    );
 
-    if (cancelledByExt) {
+    if (cancelledByExt || context.elements.length === 0) {
       activeExtensionHandlers.forEach(handler => handler.clear?.());
       return;
     }
@@ -73,11 +86,17 @@ export class ElementTransformManager extends GfxExtension {
       ),
     };
     let dragLastPos = internal.dragStartPos;
+    let lastEvent = event;
 
+    const viewportWatcher = this.gfx.viewport.viewportMoved.on(() => {
+      onDragMove(lastEvent as PointerEvent);
+    });
     const onDragMove = (event: PointerEvent) => {
       dragLastPos = Point.from(
         this.gfx.viewport.toModelCoordFromClientCoord([event.x, event.y])
       );
+
+      const shiftPressed = this.keyboard.shiftKey$.peek();
       const moveContext: ExtensionDragMoveContext = {
         ...internal,
         event,
@@ -85,6 +104,14 @@ export class ElementTransformManager extends GfxExtension {
         dx: dragLastPos.x - internal.dragStartPos.x,
         dy: dragLastPos.y - internal.dragStartPos.y,
       };
+
+      if (shiftPressed) {
+        const angle = Math.abs(Math.atan2(moveContext.dy, moveContext.dx));
+        const direction =
+          angle < Math.PI / 4 || angle > 3 * (Math.PI / 4) ? 'dx' : 'dy';
+
+        moveContext[direction] = 0;
+      }
 
       this._safeExecute(() => {
         activeExtensionHandlers.forEach(handler =>
@@ -95,7 +122,7 @@ export class ElementTransformManager extends GfxExtension {
       internal.elements.forEach(element => {
         const { view, originalBound } = element;
 
-        view.onDragMoveDelta({
+        view.onDragMove({
           currentBound: originalBound,
           dx: moveContext.dx,
           dy: moveContext.dy,
@@ -106,6 +133,7 @@ export class ElementTransformManager extends GfxExtension {
     const onDragEnd = (event: PointerEvent) => {
       host.removeEventListener('pointermove', onDragMove, false);
       host.removeEventListener('pointerup', onDragEnd, false);
+      viewportWatcher.dispose();
 
       dragLastPos = Point.from(
         this.gfx.viewport.toModelCoordFromClientCoord([event.x, event.y])
@@ -125,16 +153,14 @@ export class ElementTransformManager extends GfxExtension {
       }, 'Error while executing extension `onDragEnd` handler');
 
       internal.elements.forEach(element => {
-        const { view, model, originalBound } = element;
+        const { view, originalBound } = element;
 
-        view.onDragMoveDelta({
+        view.onDragEnd({
           currentBound: originalBound.moveDelta(endContext.dx, endContext.dy),
-          dx: 0,
-          dy: 0,
+          dx: endContext.dx,
+          dy: endContext.dy,
           elements: internal.elements,
         });
-
-        model.pop('xywh');
       });
 
       this._safeExecute(() => {
@@ -146,8 +172,11 @@ export class ElementTransformManager extends GfxExtension {
       host.addEventListener('pointerup', onDragEnd, false);
     };
     const dragStart = () => {
-      internal.elements.forEach(({ model }) => {
-        model.stash('xywh');
+      internal.elements.forEach(({ view, originalBound }) => {
+        view.onDragStart({
+          currentBound: originalBound,
+          elements: internal.elements,
+        });
       });
 
       const dragStartContext: ExtensionDragStartContext = {
@@ -168,7 +197,20 @@ export class ElementTransformManager extends GfxExtension {
   }
 }
 
+export const TransformExtensionIdentifier =
+  createIdentifier<TransformExtension>('element-transform-extension');
+
 export class TransformExtension extends Extension {
+  static key: string;
+
+  get std() {
+    return this.gfx.std;
+  }
+
+  constructor(protected readonly gfx: GfxController) {
+    super();
+  }
+
   mounted() {}
 
   unmounted() {}
@@ -180,5 +222,22 @@ export class TransformExtension extends Extension {
     clear?: () => void;
   } {
     return {};
+  }
+
+  static override setup(di: Container) {
+    if (!this.key) {
+      throw new BlockSuiteError(
+        ErrorCode.ValueNotExists,
+        'key is not defined in the TransformExtension'
+      );
+    }
+
+    di.add(
+      this as unknown as { new (gfx: GfxController): TransformExtension },
+      [GfxControllerIdentifier]
+    );
+    di.addImpl(TransformExtensionIdentifier(this.key), provider =>
+      provider.get(this)
+    );
   }
 }

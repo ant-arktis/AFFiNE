@@ -7,12 +7,14 @@ import type { Extension } from '@blocksuite/store';
 import type { PointerEventState } from '../../event/index.js';
 import type { EditorHost } from '../../view/index.js';
 import type {
+  DragEndContext,
   DragMoveContext,
+  DragStartContext,
   GfxViewTransformInterface,
 } from '../element-transform/view-transform.js';
 import type { GfxController } from '../index.js';
 import type { GfxElementGeometry, PointTestOptions } from '../model/base.js';
-import type { GfxPrimitiveElementModel } from '../model/surface/element-model.js';
+import { GfxPrimitiveElementModel } from '../model/surface/element-model.js';
 import type { GfxLocalElementModel } from '../model/surface/local-element-model.js';
 
 export type EventsHandlerMap = {
@@ -170,9 +172,21 @@ export class GfxElementModelView<
 
   onCreated() {}
 
-  onDragMoveDelta = ({ dx, dy, currentBound }: DragMoveContext) => {
+  onDragStart(_: DragStartContext) {
+    if (this.model instanceof GfxPrimitiveElementModel) {
+      this.model.stash('xywh');
+    }
+  }
+
+  onDragEnd(_: DragEndContext) {
+    if (this.model instanceof GfxPrimitiveElementModel) {
+      this.model.pop('xywh');
+    }
+  }
+
+  onDragMove({ dx, dy, currentBound }: DragMoveContext) {
     this.model.xywh = currentBound.moveDelta(dx, dy).serialize();
-  };
+  }
 
   onResize = () => {};
 

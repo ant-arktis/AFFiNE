@@ -69,13 +69,21 @@ export abstract class GfxBlockComponent<
     handleGfxConnection(this);
   }
 
-  onDragMoveDelta = ({ dx, dy, currentBound }: DragMoveContext) => {
+  onDragMove = ({ dx, dy, currentBound }: DragMoveContext) => {
     this.model.xywh = currentBound.moveDelta(dx, dy).serialize();
   };
 
-  onRotate = () => {};
+  onDragStart() {
+    this.model.stash('xywh');
+  }
 
-  onResize = () => {};
+  onDragEnd() {
+    this.model.pop('xywh');
+  }
+
+  onRotate() {}
+
+  onResize() {}
 
   getCSSTransform() {
     const viewport = this.gfx.viewport;
@@ -166,13 +174,21 @@ export function toGfxBlockComponent<
       return selection.is(SurfaceSelection);
     });
 
-    onDragMoveDelta = ({ dx, dy, currentBound }: DragMoveContext) => {
+    onDragMove({ dx, dy, currentBound }: DragMoveContext) {
       this.model.xywh = currentBound.moveDelta(dx, dy).serialize();
-    };
+    }
 
-    onRotate = () => {};
+    onDragStart() {
+      this.model.stash('xywh');
+    }
 
-    onResize = () => {};
+    onDragEnd() {
+      this.model.pop('xywh');
+    }
+
+    onRotate() {}
+
+    onResize() {}
 
     get gfx() {
       return this.std.get(GfxControllerIdentifier);
