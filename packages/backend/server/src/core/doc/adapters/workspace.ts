@@ -22,7 +22,6 @@ import {
   HistoryFilter,
 } from '../storage';
 
-const UPDATES_QUEUE_CACHE_KEY = 'doc:manager:updates';
 declare global {
   interface Events {
     'doc.snapshot.deleted': {
@@ -376,36 +375,5 @@ export class PgWorkspaceDocStorageAdapter extends DocStorageAdapter {
 
   protected async lastDocHistory(workspaceId: string, id: string) {
     return this.models.history.getLatest(workspaceId, id);
-  }
-
-  // for auto merging
-  async randomDoc() {
-    const key = await this.cache.mapRandomKey(UPDATES_QUEUE_CACHE_KEY);
-
-    if (key) {
-      const cachedCount = await this.cache.mapIncrease(
-        UPDATES_QUEUE_CACHE_KEY,
-        key,
-        0
-      );
-
-      if (cachedCount > 0) {
-        const [workspaceId, id] = key.split('::');
-        const count = await this.models.doc.getUpdateCount(workspaceId, id);
-
-        // FIXME(@forehalo): somehow the update count in cache is not accurate
-        if (count === 0) {
-          metrics.doc
-            .counter('doc_update_count_inconsistent_with_cache')
-            .add(1);
-          await this.cache.mapDelete(UPDATES_QUEUE_CACHE_KEY, key);
-          return null;
-        }
-
-        return { workspaceId, docId: id };
-      }
-    }
-
-    return null;
   }
 }
