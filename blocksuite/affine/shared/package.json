@@ -68,7 +68,7 @@
     "!dist/__tests__"
   ],
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.9"
   },
   "version": "0.20.0"
 }
