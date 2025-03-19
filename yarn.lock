@@ -400,6 +400,7 @@ __metadata:
     "@radix-ui/react-scroll-area": "npm:^1.2.2"
     "@radix-ui/react-slot": "npm:^1.1.1"
     "@radix-ui/react-toolbar": "npm:^1.1.1"
+    "@rive-app/canvas": "npm:^2.26.4"
     "@sentry/react": "npm:^9.2.0"
     "@swc/core": "npm:^1.10.1"
     "@testing-library/dom": "npm:^10.4.0"
@@ -11624,6 +11625,13 @@ __metadata:
     "@rgba-image/copy": "npm:^0.1.2"
     "@rgba-image/create-image": "npm:^0.1.1"
   checksum: 10/d5074a9ced2f3573f5d3a38adc048a7ae642013392986b3ff90daac09f475bc2f61d23e5d4a197f15b2ae61033749acf2d9e9704f203a8e318dc15413be71c58
+  languageName: node
+  linkType: hard
+
+"@rive-app/canvas@npm:^2.26.4":
+  version: 2.26.4
+  resolution: "@rive-app/canvas@npm:2.26.4"
+  checksum: 10/04414d28d52313352376375879e80551a0b8156ea7d804cddd49dc66b1028fc2466b98c36c6be7de3226e395c713fcd519f7871e0278fb45d75ed4c27121b6a3
   languageName: node
   linkType: hard
 

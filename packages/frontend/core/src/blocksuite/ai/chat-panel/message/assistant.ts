@@ -67,10 +67,6 @@ export class ChatMessageAssistant extends WithDisposable(ShadowlessElement) {
   renderContent() {
     const { host, item, isLast, status, error } = this;
 
-    if (isLast && status === 'loading') {
-      return html`<ai-loading></ai-loading>`;
-    }
-
     const state = isLast
       ? status !== 'loading' && status !== 'transmitting'
         ? 'finished'
@@ -140,6 +136,10 @@ export class ChatMessageAssistant extends WithDisposable(ShadowlessElement) {
   }
 
   protected override render() {
+    if (this.status === 'loading') {
+      return html`<ai-thinking></ai-thinking>`;
+    }
+
     return html`
       ${this.renderHeader()}
       <div class="item-wrapper">${this.renderContent()}</div>

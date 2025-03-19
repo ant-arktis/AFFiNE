@@ -222,6 +222,7 @@ export class ChatPanelMessages extends WithDisposable(ShadowlessElement) {
       filteredItems.length > 0 &&
       this.chatContextValue.status !== 'transmitting';
 
+    console.log('filteredItems', filteredItems);
     return html`
       <div
         class="chat-panel-messages"

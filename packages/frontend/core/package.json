@@ -33,6 +33,7 @@
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-toolbar": "^1.1.1",
+    "@rive-app/canvas": "^2.26.4",
     "@sentry/react": "^9.2.0",
     "@toeverything/infra": "workspace:*",
     "@toeverything/pdf-viewer": "^0.1.1",
