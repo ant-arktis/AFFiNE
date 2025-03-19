@@ -1,4 +1,5 @@
 import { Button, Modal } from '@affine/component';
+import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { IntegrationService } from '@affine/core/modules/integration';
 import { useI18n } from '@affine/i18n';
 import { useService } from '@toeverything/infra';
@@ -22,9 +23,11 @@ export const DisconnectDialog = ({ onClose }: { onClose: () => void }) => {
     readwise.disconnect();
     onClose();
   }, [onClose, readwise]);
-  // const handleDelete = useAsyncCallback(async () => {
-  //   // TODO
-  // }, []);
+  const handleDelete = useAsyncCallback(async () => {
+    await readwise.deleteAll();
+    readwise.disconnect();
+    onClose();
+  }, [onClose, readwise]);
 
   return (
     <Modal
@@ -41,7 +44,7 @@ export const DisconnectDialog = ({ onClose }: { onClose: () => void }) => {
       <footer className={styles.footer}>
         <Button onClick={handleCancel}>{t['Cancel']()}</Button>
         <div className={styles.actions}>
-          <Button variant="error">
+          <Button variant="error" onClick={handleDelete}>
             {t['com.affine.integration.readwise.disconnect.delete']()}
           </Button>
           <Button variant="primary" onClick={handleKeep}>

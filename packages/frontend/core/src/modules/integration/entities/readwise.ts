@@ -224,6 +224,23 @@ export class ReadwiseIntegration extends Entity<{ writer: IntegrationWriter }> {
       token: undefined,
       updateStrategy: undefined,
       syncNewHighlights: undefined,
+      lastImportedAt: undefined,
     });
+  }
+
+  /**
+   * Delete all highlights of current user in current workspace
+   */
+  async deleteAll() {
+    const refs = await this.getRefs();
+    await Promise.all(
+      refs.map(ref => {
+        const doc = this.docsService.list.doc$(ref.id).value;
+        if (doc) {
+          doc.moveToTrash();
+        }
+        return this.integrationRefStore.deleteRef(ref.id);
+      })
+    );
   }
 }

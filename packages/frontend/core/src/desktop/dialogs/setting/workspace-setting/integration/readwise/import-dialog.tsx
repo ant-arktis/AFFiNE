@@ -103,6 +103,7 @@ export const ImportDialog = ({ onClose }: { onClose: () => void }) => {
   }, []);
 
   const handleRetryCrawl = useCallback(() => {
+    crawler.abort();
     crawler.crawl();
   }, [crawler]);
 
@@ -144,6 +145,7 @@ export const ImportDialog = ({ onClose }: { onClose: () => void }) => {
             highlights={highlights}
             onClose={onClose}
             onConfirm={handleConfirmImport}
+            onResetLastImportedAt={handleRetryCrawl}
           />
         )
       ) : (
@@ -167,11 +169,13 @@ const SelectStage = ({
   highlights,
   onClose,
   onConfirm,
+  onResetLastImportedAt,
 }: {
   loading: boolean;
   highlights: ReadwiseHighlight[];
   onClose: () => void;
   onConfirm: (ids: ReadwiseHighlight['id'][]) => void;
+  onResetLastImportedAt: () => void;
 }) => {
   const t = useI18n();
   const readwise = useService(IntegrationService).readwise;
@@ -181,7 +185,8 @@ const SelectStage = ({
 
   const handleResetLastImportedAt = useCallback(() => {
     readwise.updateSetting('lastImportedAt', undefined);
-  }, [readwise]);
+    onResetLastImportedAt();
+  }, [onResetLastImportedAt, readwise]);
 
   const handleConfirmImport = useCallback(() => {
     onConfirm(selected);
