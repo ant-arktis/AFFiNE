@@ -20,10 +20,10 @@ export class EdgelessNoteBorderDropdownMenu extends ShadowlessElement {
           </editor-icon-button>
         `}
       >
-        <affine-edgeless-line-styles-panel
+        <edgeless-line-styles-panel
           .lineSize=${lineSize}
           .lineStyle=${lineStyle}
-        ></affine-edgeless-line-styles-panel>
+        ></edgeless-line-styles-panel>
       </editor-menu-button>
     `;
   }

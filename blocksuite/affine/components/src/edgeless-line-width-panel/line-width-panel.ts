@@ -239,6 +239,6 @@ export class EdgelessLineWidthPanel extends WithDisposable(LitElement) {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'affine-edgeless-line-width-panel': EdgelessLineWidthPanel;
+    'edgeless-line-width-panel': EdgelessLineWidthPanel;
   }
 }

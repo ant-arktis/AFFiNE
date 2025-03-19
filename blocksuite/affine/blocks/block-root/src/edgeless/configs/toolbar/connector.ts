@@ -183,7 +183,7 @@ export const builtinConnectorToolbarConfig = {
             .originalColor=${firstModel.stroke}
             .enableCustomColor=${enableCustomColor}
           >
-            <affine-edgeless-line-styles-panel
+            <edgeless-line-styles-panel
               slot="other"
               style=${styleMap({
                 display: 'flex',
@@ -193,7 +193,7 @@ export const builtinConnectorToolbarConfig = {
               @select=${onPickStrokeStyle}
               .lineSize=${strokeWidth}
               .lineStyle=${strokeStyle}
-            ></affine-edgeless-line-styles-panel>
+            ></edgeless-line-styles-panel>
             <editor-toolbar-separator
               slot="separator"
               data-orientation="horizontal"

@@ -1395,13 +1395,10 @@ export async function resizeConnectorByStartCapitalHandler(
 }
 
 export function getEdgelessLineWidthPanel(page: Page) {
-  return (
-    page
-      .locator('affine-toolbar-widget editor-toolbar')
-      // TODO(@fundon): remove ` edgeless-line-width-panel`
-      .locator('affine-edgeless-line-width-panel')
-      .locator('.line-width-panel')
-  );
+  return page
+    .locator('affine-toolbar-widget editor-toolbar')
+    .locator('edgeless-line-width-panel')
+    .locator('.line-width-panel');
 }
 export async function changeShapeStrokeWidth(page: Page) {
   const lineWidthPanel = getEdgelessLineWidthPanel(page);
@@ -1461,12 +1458,9 @@ export function locatorConnectorStrokeWidthButton(
   page: Page,
   buttonPosition: number
 ) {
-  return (
-    locatorComponentToolbar(page)
-      // TODO(@fundon): remove redundant components
-      .locator('affine-edgeless-line-width-panel')
-      .locator(`.line-width-button:nth-child(${buttonPosition})`)
-  );
+  return locatorComponentToolbar(page)
+    .locator('edgeless-line-width-panel')
+    .locator(`.line-width-button:nth-child(${buttonPosition})`);
 }
 export async function changeConnectorStrokeWidth(
   page: Page,

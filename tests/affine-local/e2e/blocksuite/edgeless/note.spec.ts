@@ -329,11 +329,7 @@ test.describe('edgeless note element toolbar', () => {
     await toolbar.getByRole('button', { name: 'Border style' }).click();
     await toolbar.locator('.mode-solid').click();
     await toolbar.getByRole('button', { name: 'Border style' }).click();
-    // TODO(@fundon): delete duplicate components
-    await toolbar
-      .locator('affine-edgeless-line-width-panel')
-      .getByLabel('8')
-      .click();
+    await toolbar.locator('edgeless-line-width-panel').getByLabel('8').click();
 
     expect(await getNoteEdgelessProps(page, noteId)).toEqual({
       style: {

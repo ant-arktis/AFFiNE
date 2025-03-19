@@ -16,8 +16,6 @@ import {
 } from '@blocksuite/affine-shared/utils';
 import { html } from 'lit';
 
-import type { LineWidthEvent } from '../../components/panel/line-width-panel';
-
 export const builtinBrushToolbarConfig = {
   actions: [
     {
@@ -28,7 +26,7 @@ export const builtinBrushToolbarConfig = {
 
         const lineWidth =
           getMostCommonValue(models, 'lineWidth') ?? LineWidth.Four;
-        const onPick = (e: LineWidthEvent) => {
+        const onPick = (e: CustomEvent<LineWidth>) => {
           e.stopPropagation();
 
           const lineWidth = e.detail;

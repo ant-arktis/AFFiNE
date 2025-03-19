@@ -49,14 +49,14 @@ export class EdgelessLineStylesPanel extends LitElement {
     const { lineSize, lineStyle, lineStyles } = this;
 
     return html`
-      <affine-edgeless-line-width-panel
+      <edgeless-line-width-panel
         ?disabled="${lineStyle === StrokeStyle.None}"
         .selectedSize=${lineSize}
         @select=${(e: CustomEvent<LineWidth>) => {
           e.stopPropagation();
           this.select({ type: 'size', value: e.detail });
         }}
-      ></affine-edgeless-line-width-panel>
+      ></edgeless-line-width-panel>
 
       <editor-toolbar-separator></editor-toolbar-separator>
 
@@ -102,6 +102,6 @@ export class EdgelessLineStylesPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'affine-edgeless-line-styles-panel': EdgelessLineStylesPanel;
+    'edgeless-line-styles-panel': EdgelessLineStylesPanel;
   }
 }

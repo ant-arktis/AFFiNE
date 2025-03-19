@@ -11,7 +11,6 @@ import {
 } from './edgeless/components/note-slicer/index.js';
 import { EdgelessFontFamilyPanel } from './edgeless/components/panel/font-family-panel.js';
 import { EdgelessFontWeightAndStylePanel } from './edgeless/components/panel/font-weight-and-style-panel.js';
-import { EdgelessLineWidthPanel } from './edgeless/components/panel/line-width-panel.js';
 import { NoteDisplayModePanel } from './edgeless/components/panel/note-display-mode-panel.js';
 import { EdgelessNoteShadowPanel } from './edgeless/components/panel/note-shadow-panel.js';
 import { EdgelessScalePanel } from './edgeless/components/panel/scale-panel.js';
@@ -219,7 +218,6 @@ function registerEdgelessToolbarComponents() {
 }
 
 function registerEdgelessPanelComponents() {
-  customElements.define('edgeless-line-width-panel', EdgelessLineWidthPanel);
   customElements.define(
     'edgeless-font-weight-and-style-panel',
     EdgelessFontWeightAndStylePanel
@@ -317,7 +315,6 @@ declare global {
     'note-slicer': NoteSlicer;
     'edgeless-font-family-panel': EdgelessFontFamilyPanel;
     'edgeless-font-weight-and-style-panel': EdgelessFontWeightAndStylePanel;
-    'edgeless-line-width-panel': EdgelessLineWidthPanel;
     'note-display-mode-panel': NoteDisplayModePanel;
     'edgeless-note-shadow-panel': EdgelessNoteShadowPanel;
     'edgeless-scale-panel': EdgelessScalePanel;

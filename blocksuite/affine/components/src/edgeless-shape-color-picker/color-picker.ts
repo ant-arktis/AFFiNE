@@ -260,12 +260,12 @@ export class EdgelessShapeColorPicker extends WithDisposable(
                     `
                   )}
                   <div class="picker-label">Border style</div>
-                  <affine-edgeless-line-styles-panel
+                  <edgeless-line-styles-panel
                     class="picker"
                     .lineSize=${strokeWidth}
                     .lineStyle=${strokeStyle}
                     @select=${this.#pickStrokeStyle}
-                  ></affine-edgeless-line-styles-panel>
+                  ></edgeless-line-styles-panel>
                 `;
               },
             ],
