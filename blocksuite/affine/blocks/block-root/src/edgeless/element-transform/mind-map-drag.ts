@@ -5,11 +5,11 @@ import {
   OverlayIdentifier,
   type SurfaceBlockComponent,
 } from '@blocksuite/affine-block-surface';
-import type {
-  LayoutType,
-  LocalConnectorElementModel,
+import {
+  type LayoutType,
+  type LocalConnectorElementModel,
   MindmapElementModel,
-  MindmapNode,
+  type MindmapNode,
 } from '@blocksuite/affine-model';
 import {
   type DragExtensionInitializeContext,

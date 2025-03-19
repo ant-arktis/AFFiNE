@@ -3,9 +3,9 @@ import {
   createIdentifier,
   type ServiceIdentifier,
 } from '@blocksuite/global/di';
+import { DisposableGroup } from '@blocksuite/global/disposable';
 import { BlockSuiteError, ErrorCode } from '@blocksuite/global/exceptions';
 import { Bound, Point } from '@blocksuite/global/gfx';
-import { DisposableGroup } from '@blocksuite/global/slot';
 import { Extension } from '@blocksuite/store';
 
 import type { PointerEventState } from '../../event/state/pointer.js';
@@ -135,7 +135,7 @@ export class ElementTransformManager extends GfxExtension {
     let dragLastPos = internal.dragStartPos;
     let lastEvent = event;
 
-    const viewportWatcher = this.gfx.viewport.viewportMoved.on(() => {
+    const viewportWatcher = this.gfx.viewport.viewportMoved.subscribe(() => {
       onDragMove(lastEvent as PointerEvent);
     });
     const onDragMove = (event: PointerEvent) => {
@@ -180,7 +180,7 @@ export class ElementTransformManager extends GfxExtension {
     const onDragEnd = (event: PointerEvent) => {
       host.removeEventListener('pointermove', onDragMove, false);
       host.removeEventListener('pointerup', onDragEnd, false);
-      viewportWatcher.dispose();
+      viewportWatcher.unsubscribe();
 
       dragLastPos = Point.from(
         this.gfx.viewport.toModelCoordFromClientCoord([event.x, event.y])

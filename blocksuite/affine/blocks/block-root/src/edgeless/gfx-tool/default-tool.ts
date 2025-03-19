@@ -638,7 +638,7 @@ export class DefaultTool extends BaseTool {
     }
   }
 
-  override dragEnd(e: PointerEventState) {
+  override dragEnd() {
     if (this._lock) {
       this.doc.captureSync();
       this._lock = false;
