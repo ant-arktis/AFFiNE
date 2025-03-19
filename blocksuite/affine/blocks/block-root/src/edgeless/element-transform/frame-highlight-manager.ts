@@ -13,6 +13,7 @@ import {
   type ExtensionDragEndContext,
   type ExtensionDragMoveContext,
   type ExtensionDragStartContext,
+  getTopElements,
   GfxExtensionIdentifier,
   TransformExtension,
 } from '@blocksuite/block-std/gfx';
@@ -65,10 +66,12 @@ export class FrameHighlightManager extends TransformExtension {
         }
       },
       onDragEnd(context) {
-        const topElements = context.elements.map(elem =>
-          elem.model.group instanceof MindmapElementModel
-            ? elem.model.group
-            : elem.model
+        const topElements = getTopElements(
+          context.elements.map(elem =>
+            elem.model.group instanceof MindmapElementModel
+              ? elem.model.group
+              : elem.model
+          )
         );
 
         if (hoveredFrame) {
